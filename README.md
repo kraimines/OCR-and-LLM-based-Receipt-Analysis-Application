@@ -1,4 +1,4 @@
-# 🎫 TicketOCR - Système Intelligent d'Analyse de Documents Financiers
+﻿# 🎫 TicketOCR - Système Intelligent d'Analyse de Documents Financiers
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-4.2.7-green.svg)](https://www.djangoproject.com/)
@@ -28,13 +28,6 @@ https://github.com/user-attachments/assets/4c09f005-d060-4bec-90d5-a7ad34a4b889
 ## 🎯 Aperçu
 
 TicketOCR transforme le traitement manuel de documents financiers en un workflow automatisé intelligent. Conçu initialement pour le secteur bancaire (Banque Zitouna), le système combine plusieurs technologies OCR de pointe avec des modèles de langage (LLM) pour extraire, analyser et valider automatiquement les données de tickets.
-
-### Statistiques de Performance
-
-- **Précision OCR** : 95% sur documents standards, 85% sur documents dégradés
-- **Temps de traitement** : < 3 secondes par document
-- **Gain de productivité** : 80% de réduction du temps de saisie manuelle
-- **Formats supportés** : JPG, PNG, PDF multi-pages
 
 ## ✨ Fonctionnalités
 
