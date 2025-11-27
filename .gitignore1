@@ -1,0 +1,12 @@
+
+# Fichiers à ignorer
+.env
+db.sqlite3
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+media/
+staticfiles/
+" > .gitignore

@@ -1,0 +1,214 @@
+/* 
+ * Thème ZITOUNA pour l'application OCR Pro
+ * Couleurs inspirées du logo et de l'identité visuelle de la Banque Zitouna
+ */
+
+:root {
+    /* Couleurs principales ZITOUNA */
+    --zitouna-green-primary: #2d5016;    /* Vert foncé principal */
+    --zitouna-green-secondary: #4a7c59;  /* Vert moyen */
+    --zitouna-green-light: #6b8e23;      /* Vert olive */
+    --zitouna-beige-primary: #f5f5dc;    /* Beige principal */
+    --zitouna-beige-secondary: #ddbf94;  /* Beige plus foncé */
+    --zitouna-beige-light: #faf8f3;      /* Beige très clair */
+    
+    /* Couleurs système */
+    --zitouna-success: #228b22;
+    --zitouna-warning: #ff8c00;
+    --zitouna-danger: #dc3545;
+    --zitouna-info: #17a2b8;
+    --zitouna-dark: #2c3e2d;
+    
+    /* Ombres et effets */
+    --zitouna-shadow-light: 0 2px 10px rgba(45, 80, 22, 0.1);
+    --zitouna-shadow-medium: 0 4px 15px rgba(45, 80, 22, 0.15);
+    --zitouna-shadow-heavy: 0 8px 25px rgba(45, 80, 22, 0.2);
+}
+
+/* Styles généraux */
+body.zitouna-theme {
+    background: linear-gradient(135deg, var(--zitouna-beige-primary) 0%, var(--zitouna-beige-secondary) 50%, var(--zitouna-green-secondary) 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header ZITOUNA */
+.zitouna-header {
+    background: linear-gradient(135deg, var(--zitouna-green-primary) 0%, var(--zitouna-green-secondary) 100%);
+    box-shadow: var(--zitouna-shadow-medium);
+    color: white;
+}
+
+/* Conteneurs principaux */
+.zitouna-container {
+    background: linear-gradient(145deg, white 0%, var(--zitouna-beige-primary) 100%);
+    border: 2px solid var(--zitouna-beige-secondary);
+    border-radius: 15px;
+    box-shadow: var(--zitouna-shadow-light);
+    transition: all 0.3s ease;
+}
+
+.zitouna-container:hover {
+    box-shadow: var(--zitouna-shadow-medium);
+    transform: translateY(-2px);
+}
+
+/* Cartes */
+.zitouna-card {
+    background: linear-gradient(135deg, white 0%, var(--zitouna-beige-light) 100%);
+    border: 1px solid var(--zitouna-beige-secondary);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.zitouna-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--zitouna-shadow-medium);
+    border-color: var(--zitouna-green-secondary);
+}
+
+/* Boutons ZITOUNA */
+.btn-zitouna-primary {
+    background: linear-gradient(135deg, var(--zitouna-green-primary) 0%, var(--zitouna-green-secondary) 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: var(--zitouna-shadow-light);
+}
+
+.btn-zitouna-primary:hover {
+    background: linear-gradient(135deg, var(--zitouna-green-secondary) 0%, var(--zitouna-green-primary) 100%);
+    transform: translateY(-2px);
+    box-shadow: var(--zitouna-shadow-medium);
+    color: white;
+}
+
+.btn-zitouna-secondary {
+    background: linear-gradient(135deg, var(--zitouna-beige-secondary) 0%, var(--zitouna-beige-primary) 100%);
+    border: 1px solid var(--zitouna-green-secondary);
+    color: var(--zitouna-green-primary);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-zitouna-secondary:hover {
+    background: linear-gradient(135deg, var(--zitouna-green-secondary) 0%, var(--zitouna-green-primary) 100%);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Zone de téléchargement */
+.zitouna-upload-zone {
+    background: linear-gradient(135deg, var(--zitouna-beige-primary) 0%, rgba(245, 245, 220, 0.7) 100%);
+    border: 2px dashed var(--zitouna-green-secondary);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.zitouna-upload-zone:hover {
+    background: linear-gradient(135deg, var(--zitouna-beige-secondary) 0%, var(--zitouna-beige-primary) 100%);
+    border-color: var(--zitouna-green-primary);
+    transform: scale(1.02);
+}
+
+/* Alertes ZITOUNA */
+.alert-zitouna-info {
+    background: linear-gradient(135deg, var(--zitouna-beige-primary) 0%, rgba(245, 245, 220, 0.8) 100%);
+    border-color: var(--zitouna-green-secondary);
+    color: var(--zitouna-dark);
+}
+
+.alert-zitouna-success {
+    background: linear-gradient(135deg, rgba(34, 139, 34, 0.1) 0%, rgba(34, 139, 34, 0.05) 100%);
+    border-color: var(--zitouna-success);
+    color: var(--zitouna-success);
+}
+
+/* Tables */
+.table-zitouna thead {
+    background: linear-gradient(135deg, var(--zitouna-green-primary) 0%, var(--zitouna-green-secondary) 100%);
+    color: white;
+}
+
+.table-zitouna tbody tr:hover {
+    background-color: var(--zitouna-beige-light);
+}
+
+/* Footer ZITOUNA */
+.zitouna-footer {
+    background: linear-gradient(135deg, var(--zitouna-green-primary) 0%, var(--zitouna-green-secondary) 100%);
+    box-shadow: 0 -4px 15px rgba(45, 80, 22, 0.3);
+    color: white;
+}
+
+/* Statistiques */
+.zitouna-stats-card {
+    background: linear-gradient(135deg, var(--zitouna-green-primary), var(--zitouna-green-secondary));
+    color: white;
+    border-radius: 10px;
+    box-shadow: var(--zitouna-shadow-light);
+    transition: all 0.3s ease;
+}
+
+.zitouna-stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--zitouna-shadow-medium);
+}
+
+/* Indicateurs de statut */
+.zitouna-status-success {
+    background: linear-gradient(135deg, var(--zitouna-success) 0%, var(--zitouna-green-secondary) 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+/* Animations */
+@keyframes zitouna-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(45, 80, 22, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(45, 80, 22, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(45, 80, 22, 0); }
+}
+
+.zitouna-pulse {
+    animation: zitouna-pulse 2s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .zitouna-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .zitouna-header {
+        padding: 0.75rem 0;
+    }
+}
+
+/* Utilitaires */
+.text-zitouna-green {
+    color: var(--zitouna-green-primary) !important;
+}
+
+.text-zitouna-beige {
+    color: var(--zitouna-beige-secondary) !important;
+}
+
+.bg-zitouna-green {
+    background: linear-gradient(135deg, var(--zitouna-green-primary) 0%, var(--zitouna-green-secondary) 100%) !important;
+}
+
+.bg-zitouna-beige {
+    background: linear-gradient(135deg, var(--zitouna-beige-primary) 0%, var(--zitouna-beige-secondary) 100%) !important;
+}
+
+.border-zitouna-green {
+    border-color: var(--zitouna-green-secondary) !important;
+}
+
+.border-zitouna-beige {
+    border-color: var(--zitouna-beige-secondary) !important;
+}

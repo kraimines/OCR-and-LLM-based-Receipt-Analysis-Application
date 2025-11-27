@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique des Tickets | OCR Pro ZITOUNA - Banque Zitouna</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #2d5016;  /* Vert foncé ZITOUNA */
+            --secondary-color: #4a7c59; /* Vert moyen ZITOUNA */
+            --accent-color: #6b8e23;    /* Vert olive */
+            --light-color: #f5f5dc;     /* Beige clair */
+            --dark-color: #2c3e2d;      /* Vert très foncé */
+            --success-color: #228b22;   /* Vert succès */
+            --beige-primary: #f5f5dc;   /* Beige principal */
+            --beige-secondary: #ddbf94; /* Beige plus foncé */
+            --green-primary: #2d5016;   /* Vert principal ZITOUNA */
+            --green-secondary: #4a7c59; /* Vert secondaire */
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--beige-primary) 0%, var(--beige-secondary) 50%, var(--green-secondary) 100%);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+        
+        .history-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            margin-top: 3rem;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .ticket-card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .ticket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-cumulative {
+            background-color: var(--success-color);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cumulative:hover {
+            background-color: #3a9d35;
+            transform: translateY(-2px);
+        }
+        
+        /* Styles personnalisés ZITOUNA pour l'historique */
+        .history-container {
+            background: linear-gradient(145deg, white 0%, var(--beige-primary) 100%);
+            border: 2px solid var(--beige-secondary);
+        }
+        
+        .card {
+            background: linear-gradient(135deg, white 0%, var(--beige-primary) 100%);
+            border-color: var(--beige-secondary);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-secondary) 100%);
+            border-color: var(--green-primary);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--green-secondary) 0%, var(--green-primary) 100%);
+            border-color: var(--green-secondary);
+            transform: translateY(-2px);
+        }
+        
+        .table-dark {
+            background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-secondary) 100%);
+        }
+        
+        .bg-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--green-secondary) 100%) !important;
+        }
+        
+        .bg-info {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--green-secondary) 100%) !important;
+        }
+    </style>
+</head>
+<body>
+    {% csrf_token %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="history-container">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Historique des Tickets
+                        </h1>
+                        <a href="{% url 'upload_ticket' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Nouveau Ticket
+                        </a>
+                    </div>
+                    
+                    <!-- Token CSRF pour les requêtes AJAX -->
+                    {% csrf_token %}
+                    
+                    <!-- Statistiques -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="stats-card text-center">
+                                <i class="fas fa-receipt fa-2x mb-2"></i>
+                                <h3>{{ period_ticket_count }}</h3>
+                                <p class="mb-0">
+                                    Tickets 
+                                    {% if budget_info.budget_type == 'monthly' %}
+                                        {{ budget_info.selected_month|stringformat:"02d" }}/{{ budget_info.selected_year }}
+                                    {% else %}
+                                        {{ budget_info.selected_year }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card text-center">
+                                <i class="fas fa-calculator fa-2x mb-2"></i>
+                                <h3>{{ period_total_amount|floatformat:3 }} DT</h3>
+                                <p class="mb-0">
+                                    Total période
+                                    {% if budget_info.budget_type == 'monthly' %}
+                                        {{ budget_info.selected_month|stringformat:"02d" }}/{{ budget_info.selected_year }}
+                                    {% else %}
+                                        {{ budget_info.selected_year }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card text-center">
+                                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                <h3>{{ ticket_count }}</h3>
+                                <p class="mb-0">Total global tickets</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gestion de Budget -->
+                    <div class="card mb-4">
+                        <div class="card-header" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white;">
+                            <h5 class="mb-0">
+                                <i class="fas fa-piggy-bank me-2"></i>Gestion de Budget
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Sélecteur de type de budget -->
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Configuration Budget</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <form id="budgetForm">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong>Type de budget :</strong></label>
+                                                    <div class="btn-group w-100" role="group">
+                                                        <input type="radio" class="btn-check" name="budget_type" id="monthly" value="monthly" {% if current_budget_type == 'monthly' %}checked{% endif %}>
+                                                        <label class="btn btn-outline-primary" for="monthly">
+                                                            <i class="fas fa-calendar-alt me-2"></i>Mensuel
+                                                        </label>
+                                                        <input type="radio" class="btn-check" name="budget_type" id="yearly" value="yearly" {% if current_budget_type == 'yearly' %}checked{% endif %}>
+                                                        <label class="btn btn-outline-primary" for="yearly">
+                                                            <i class="fas fa-calendar me-2"></i>Annuel
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Sélecteurs de période -->
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong>Période :</strong></label>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <label for="budget_year" class="form-label">Année :</label>
+                                                                                                                        <select class="form-select" id="budget_year" name="year">
+                                                                                                                                {% for y in budget_info.year_range %}
+                                                                                                                                    <option value="{{ y }}" {% if budget_info.selected_year == y %}selected{% endif %}>{{ y }}</option>
+                                                                                                                                {% endfor %}
+                                                                                                                        </select>
+                                                        </div>
+                                                        <div class="col-md-6" id="month_selector" {% if current_budget_type == 'yearly' %}style="display: none;"{% endif %}>
+                                                            <label for="budget_month" class="form-label">Mois :</label>
+                                                            <select class="form-select" id="budget_month" name="month">
+                                                                <option value="1" {% if budget_info.selected_month == 1 %}selected{% endif %}>Janvier</option>
+                                                                <option value="2" {% if budget_info.selected_month == 2 %}selected{% endif %}>Février</option>
+                                                                <option value="3" {% if budget_info.selected_month == 3 %}selected{% endif %}>Mars</option>
+                                                                <option value="4" {% if budget_info.selected_month == 4 %}selected{% endif %}>Avril</option>
+                                                                <option value="5" {% if budget_info.selected_month == 5 %}selected{% endif %}>Mai</option>
+                                                                <option value="6" {% if budget_info.selected_month == 6 %}selected{% endif %}>Juin</option>
+                                                                <option value="7" {% if budget_info.selected_month == 7 %}selected{% endif %}>Juillet</option>
+                                                                <option value="8" {% if budget_info.selected_month == 8 %}selected{% endif %}>Août</option>
+                                                                <option value="9" {% if budget_info.selected_month == 9 %}selected{% endif %}>Septembre</option>
+                                                                <option value="10" {% if budget_info.selected_month == 10 %}selected{% endif %}>Octobre</option>
+                                                                <option value="11" {% if budget_info.selected_month == 11 %}selected{% endif %}>Novembre</option>
+                                                                <option value="12" {% if budget_info.selected_month == 12 %}selected{% endif %}>Décembre</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="budget_amount" class="form-label"><strong>Montant du budget (DT) :</strong></label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"><i class="fas fa-euro-sign"></i></span>
+                                                        <input type="number" class="form-control" id="budget_amount" step="0.001" min="0" placeholder="Ex: 1000.000" required>
+                                                        <span class="input-group-text">DT</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <button type="submit" class="btn btn-success w-100">
+                                                            <i class="fas fa-save me-2"></i>Définir Budget
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <button type="button" class="btn btn-info w-100" id="changePeriodBtn">
+                                                            <i class="fas fa-calendar-alt me-2"></i>Changer Période
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Indicateurs de budget -->
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Suivi Budget</h6>
+                                        </div>
+                                        <div class="card-body" id="budgetIndicators">
+                                            {% if budget_info.budget_exists %}
+                                                <div class="mb-3">
+                                                    <strong>Période actuelle :</strong>
+                                                    <span class="badge bg-secondary">
+                                                        {% if budget_info.budget_type == 'monthly' %}
+                                                            {{ budget_info.selected_month|stringformat:"02d" }}/{{ budget_info.selected_year }}
+                                                        {% else %}
+                                                            Année {{ budget_info.selected_year }}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <strong>Budget {{ budget_info.budget_type|title }} :</strong>
+                                                    <span class="badge bg-primary">{{ budget_info.budget_amount|floatformat:3 }} DT</span>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <strong>Dépenses actuelles :</strong>
+                                                    <span class="badge bg-info">{{ budget_info.current_expenses|floatformat:3 }} DT</span>
+                                                </div>
+                                                {% if budget_info.remaining %}
+                                                    <div class="alert alert-success">
+                                                        <i class="fas fa-check-circle me-2"></i>
+                                                        <strong>Restant :</strong> {{ budget_info.remaining|floatformat:3 }} DT
+                                                    </div>
+                                                {% elif budget_info.exceeded %}
+                                                    <div class="alert alert-danger">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                                        <strong>Dépassement :</strong> {{ budget_info.exceeded|floatformat:3 }} DT
+                                                    </div>
+                                                {% endif %}
+                                                
+                                                <!-- Barre de progression -->
+                                                <div class="mb-2">
+                                                    <small><strong>Progression :</strong></small>
+                                                </div>
+                                                <div class="progress mb-2" id="budgetProgress">
+                                                    <div class="progress-bar" role="progressbar" id="budgetProgressBar">
+                                                        <span id="budgetProgressText"></span>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    Aucun budget défini pour cette période.
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alerte de dépassement de budget -->
+                    {% if budget_exceeded and budget_info.budget_exists %}
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                            <div>
+                                <h5 class="alert-heading mb-1">
+                                    <i class="fas fa-warning me-2"></i>Budget Dépassé !
+                                </h5>
+                                <p class="mb-1">
+                                    <strong>Attention :</strong> Le budget {{ budget_info.type|title }} de 
+                                    <strong>{{ budget_info.budget_amount|floatformat:3 }} DT</strong> a été dépassé.
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Dépassement :</strong> {{ budget_info.exceeded|floatformat:3 }} DT
+                                    <span class="badge bg-light text-dark ms-2">
+                                        {{ period_ticket_count }} ticket(s) dans la période
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% elif overflow_threshold_reached and budget_info.budget_exists %}
+                    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle fa-2x me-3"></i>
+                            <div>
+                                <h5 class="alert-heading mb-1">
+                                    <i class="fas fa-chart-line me-2"></i>Seuil de Budget Atteint
+                                </h5>
+                                <p class="mb-0">
+                                    Certains tickets ont entraîné le dépassement du budget. 
+                                    Ils sont marqués en rouge dans la liste ci-dessous.
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Dashboard par compte comptable -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Dashboard par compte comptable
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if dashboard_comptes and dashboard_comptes|length > 0 %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <canvas id="pieCompteChart" height="250"></canvas>
+                                </div>
+                                <div class="col-md-6">
+                                    <canvas id="barCompteChart" height="250"></canvas>
+                                </div>
+                            </div>
+                            <div class="table-responsive mt-4">
+                                <table class="table table-bordered mb-0">
+                                    <thead class="table-success">
+                                        <tr>
+                                            <th>Compte</th>
+                                            <th>Total Débit</th>
+                                            <th>Nb écritures</th>
+                                            <th>Descriptions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for compte in dashboard_comptes %}
+                                        <tr>
+                                            <td>{{ compte.compte }}</td>
+                                            <td>{{ compte.total_debit|floatformat:3 }} DT</td>
+                                            <td>{{ compte.nb_ecritures }}</td>
+                                            <td>
+                                                {% for desc in compte.descriptions %}
+                                                <span class="badge bg-secondary">{{ desc }}</span>
+                                                {% endfor %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                  const pieCanvas = document.getElementById('pieCompteChart');
+                                  const barCanvas = document.getElementById('barCompteChart');
+                                  if (pieCanvas && barCanvas) {
+                                    const compteLabels = [{% for compte in dashboard_comptes %}'{{ compte.compte }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+                                    const debitData = [{% for compte in dashboard_comptes %}{{ compte.total_debit|floatformat:'3' }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+                                    // Crédit supprimé
+                                    // Camembert Débit
+                                    new Chart(pieCanvas, {
+                                      type: 'pie',
+                                      data: {
+                                        labels: compteLabels,
+                                        datasets: [{
+                                          label: 'Total Débit',
+                                          data: debitData,
+                                          backgroundColor: [
+                                            '#2d5016', '#4a7c59', '#6b8e23', '#f7931e', '#ff6b35', '#228b22', '#ddbf94', '#2c3e2d', '#f5f5dc', '#3a9d35'
+                                          ],
+                                        }]
+                                      },
+                                      options: {
+                                        plugins: {
+                                          title: { display: true, text: 'Répartition Débit par compte' }
+                                }
+                              }
+                            });
+                                                        // Graphique barres (Débit uniquement)
+                                                        new Chart(barCanvas, {
+                                                            type: 'bar',
+                                                            data: { labels: compteLabels, datasets: [{ label: 'Total Débit', data: debitData, backgroundColor: '#4a7c59' }] },
+                                                            options: { plugins: { title: { display: true, text: 'Total Débit par compte' } }, responsive: true, scales: { y: { beginAtZero: true } } }
+                                                        });
+                          }
+                        });
+                          </script>
+                            {% else %}
+                            <div class="alert alert-info mb-0">Aucune écriture comptable trouvée pour la période sélectionnée.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    
+                    
+                    <!-- Liste des tickets avec gestion de budget -->
+                     {% if tickets_with_budget_status %}
+                     <div class="card mb-4">
+                         <div class="card-header bg-secondary text-white">
+                             <h5 class="mb-0">
+                                 <i class="fas fa-list me-2"></i>Liste des Tickets de Caisse
+                                 {% if budget_info.budget_exists %}
+                                     <span class="badge bg-light text-dark ms-2">
+                                         Budget {{ budget_info.type|title }} : {{ budget_info.budget_amount|floatformat:3 }} DT
+                                     </span>
+                                 {% endif %}
+                             </h5>
+                         </div>
+                         <div class="card-body p-0">
+                             <div class="table-responsive">
+                                 <table class="table table-hover mb-0">
+                                     <thead class="table-dark">
+                                         <tr>
+                                             <th>Date</th>
+                                             <th>Magasin</th>
+                                            <th>Numéro de Compte</th>
+                                            <th>Description</th>
+                                             <th>Total</th>
+                                             <th>Articles</th>
+                                             {% if budget_info.budget_exists %}
+                                             <th>Statut Budget</th>
+                                             {% endif %}
+                                             <th>Actions</th>
+                                         </tr>
+                                     </thead>
+                                     <tbody>
+                                         {% for ticket_status in tickets_with_budget_status %}
+                                         <tr class="{% if ticket_status.causes_overflow %}table-danger{% elif ticket_status.is_over_budget %}table-warning{% endif %}">
+                                             <td>
+                                                 {{ ticket_status.ticket.date_ticket|date:"d/m/Y" }}
+                                                 {% if ticket_status.causes_overflow %}
+                                                     <i class="fas fa-exclamation-triangle text-danger ms-1" title="Ce ticket a causé le dépassement du budget"></i>
+                                                 {% endif %}
+                                             </td>
+                                             <td><strong>{{ ticket_status.ticket.magasin }}</strong></td>
+                                            <td>{{ ticket_status.compte|default:"-" }}</td>
+                                            <td>{{ ticket_status.description|default:"-" }}</td>
+                                             <td>
+                                                 <span class="badge {% if ticket_status.causes_overflow %}bg-danger{% elif ticket_status.is_over_budget %}bg-warning{% else %}bg-success{% endif %}">
+                                                     {{ ticket_status.ticket.total|floatformat:3 }} DT
+                                                 </span>
+                                             </td>
+                                             <td>
+                                                 {% if ticket_status.ticket.articles_data %}
+                                                     <small>{{ ticket_status.ticket.articles_data|length }} article(s)</small>
+                                                 {% else %}
+                                                     <small class="text-muted">Aucun article</small>
+                                                 {% endif %}
+                                             </td>
+                                             {% if budget_info.budget_exists %}
+                                             <td>
+                                                 {% if ticket_status.running_total %}
+                                                     {% if ticket_status.causes_overflow %}
+                                                         <span class="badge bg-danger">
+                                                             <i class="fas fa-exclamation-triangle me-1"></i>Dépassement
+                                                         </span>
+                                                     {% elif ticket_status.is_over_budget %}
+                                                         <span class="badge bg-warning text-dark">
+                                                             <i class="fas fa-warning me-1"></i>Hors budget
+                                                         </span>
+                                                     {% else %}
+                                                         <span class="badge bg-success">
+                                                             <i class="fas fa-check me-1"></i>Dans budget
+                                                         </span>
+                                                     {% endif %}
+                                                     <br>
+                                                     <small class="text-muted">
+                                                         Cumulé: {{ ticket_status.running_total|floatformat:3 }} DT
+                                                         ({{ ticket_status.percentage_of_budget|floatformat:1 }}%)
+                                                     </small>
+                                                 {% else %}
+                                                     <span class="badge bg-secondary">
+                                                         <i class="fas fa-calendar-times me-1"></i>Hors période
+                                                     </span>
+                                                 {% endif %}
+                                             </td>
+                                             {% endif %}
+                                             <td>
+                                                 <button class="btn btn-sm btn-outline-info" onclick="viewTicketDetails({{ ticket_status.ticket.id }})">
+                                                     <i class="fas fa-eye"></i>
+                                                 </button>
+                                             </td>
+                                         </tr>
+                                         {% endfor %}
+                                     </tbody>
+                                 </table>
+                             </div>
+                         </div>
+                     </div>
+                     
+                     <!-- Légende des codes couleur -->
+                     {% if budget_info.budget_exists %}
+                     <div class="card mb-4">
+                         <div class="card-header bg-info text-white">
+                             <h6 class="mb-0">
+                                 <i class="fas fa-info-circle me-2"></i>Légende des Codes Couleur
+                             </h6>
+                         </div>
+                         <div class="card-body">
+                             <div class="row">
+                                 <div class="col-md-4">
+                                     <div class="d-flex align-items-center mb-2">
+                                         <div class="badge bg-success me-2">Normal</div>
+                                         <small>Ticket dans les limites du budget</small>
+                                     </div>
+                                 </div>
+                                 <div class="col-md-4">
+                                     <div class="d-flex align-items-center mb-2">
+                                         <div class="badge bg-danger me-2">Rouge</div>
+                                         <small>Ticket ayant causé le dépassement</small>
+                                     </div>
+                                 </div>
+                                 <div class="col-md-4">
+                                     <div class="d-flex align-items-center mb-2">
+                                         <div class="badge bg-warning text-dark me-2">Orange</div>
+                                         <small>Ticket ajouté après dépassement</small>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                     {% endif %}
+                     {% else %}
+                     <div class="text-center py-5">
+                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                         {% if budget_info.budget_exists %}
+                             <h5 class="text-muted mb-2">Aucun ticket pour cette période de budget</h5>
+                             <p class="text-muted">
+                                 Il n'y a aucun ticket pour la période 
+                                 {% if budget_info.budget_type == 'monthly' %}
+                                     du mois {{ budget_info.current_month }}/{{ budget_info.current_year }}
+                                 {% else %}
+                                     de l'année {{ budget_info.current_year }}
+                                 {% endif %}.
+                             </p>
+                             <p class="text-muted">Votre budget de {{ budget_info.budget_amount|floatformat:3 }} DT n'a pas encore été utilisé.</p>
+                         {% else %}
+                             <h5 class="text-muted mb-2">Aucun ticket trouvé</h5>
+                             <p class="text-muted">Il n'y a aucun ticket dans votre historique.</p>
+                             <p class="text-muted">Commencez par définir un budget et analyser vos premiers tickets.</p>
+                         {% endif %}
+                     </div>
+                     <div class="text-center">
+                         <a href="{% url 'upload_ticket' %}" class="btn btn-primary">
+                             <i class="fas fa-plus me-2"></i>Analyser un Ticket
+                         </a>
+                     </div>
+                     {% endif %}
+                     
+                     <!-- Bilan Cumulatif -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Bilan Comptable Cumulatif
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Filtres de date -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="filter_start_date" class="form-label"><strong>Date de début :</strong></label>
+                                    <input type="date" class="form-control" id="filter_start_date" name="filter_start_date">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="filter_end_date" class="form-label"><strong>Date de fin :</strong></label>
+                                    <input type="date" class="form-control" id="filter_end_date" name="filter_end_date">
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="button" class="btn btn-primary me-2" onclick="filterAccountingData()">
+                                        <i class="fas fa-filter me-2"></i>Filtrer
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                        <i class="fas fa-undo me-2"></i>Réinitialiser
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Tableau des écritures comptables -->
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Numéro de Compte</th>
+                                            <th>Description</th>
+                                            <th>Libellé Écriture</th>
+                                            <th>debit</th>
+                                            <th>Crédit</th>
+                                            
+                                        </tr>
+                                    </thead>
+                                    <tbody id="accounting-entries">
+                                        {% for entry in accounting_entries %}
+                                        <tr>
+                                            <td>{{ entry.date_ecriture|date:"d/m/Y" }}</td>
+                                            <td><strong>{{ entry.compte }}</strong></td>
+                                            <td>{{ entry.description }}</td>
+                                            <td>{{ entry.libelle_ecriture }}</td>
+                                            <td class="text-end">{{ entry.debit|floatformat:3 }} DT</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Totaux par compte -->
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-calculator me-2"></i>Totaux par Compte
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Compte</th>
+                                                            <th class="text-end">Total Débit</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="account-totals">
+                                                        {% for account_total in account_totals %}
+                                                        <tr>
+                                                            <td><strong>{{ account_total.compte }}</strong></td>
+                                                            <td class="text-end">{{ account_total.total_debit|floatformat:3 }} DT</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-chart-pie me-2"></i>Résumé
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <ul class="list-unstyled mb-0">
+                                                <li><strong>Nombre d'écritures :</strong> <span id="total-entries">{{ accounting_entries|length }}</span></li>
+                                                <li><strong>Total Débit :</strong> <span id="total-debit">{{ total_debit|floatformat:3 }} DT</span></li>
+                                                <li><strong>Nombre de comptes :</strong> <span id="total-accounts">{{ account_totals|length }}</span></li>
+                                                <li><strong>Période :</strong> <span id="period-display">Toutes les dates</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bouton Bilan Cumulatif -->
+                    <div class="text-center mb-4">
+                        <button type="button" class="btn btn-cumulative" data-bs-toggle="modal" data-bs-target="#cumulativeModal">
+                            <i class="fas fa-file-pdf me-2"></i>Générer Bilan Comptable Cumulatif
+                        </button>
+                    </div>
+                    
+                    <!-- Liste des tickets avec gestion de budget -->
+                    <!--{% if tickets_with_budget_status %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>Liste des Tickets de Caisse
+                                {% if budget_info.budget_exists %}
+                                    <span class="badge bg-light text-dark ms-2">
+                                        Budget {{ budget_info.type|title }} : {{ budget_info.budget_amount|floatformat:3 }} DT
+                                    </span>
+                                {% endif %}
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Magasin</th>
+                                            <th>Numéro Ticket</th>
+                                            <th>Total</th>
+                                            <th>Articles</th>
+                                            {% if budget_info.budget_exists %}
+                                            <th>Statut Budget</th>
+                                            {% endif %}
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ticket_status in tickets_with_budget_status %}
+                                        <tr class="{% if ticket_status.causes_overflow %}table-danger{% elif ticket_status.is_over_budget %}table-warning{% endif %}">
+                                            <td>
+                                                {{ ticket_status.ticket.date_ticket|date:"d/m/Y" }}
+                                                {% if ticket_status.causes_overflow %}
+                                                    <i class="fas fa-exclamation-triangle text-danger ms-1" title="Ce ticket a causé le dépassement du budget"></i>
+                                                {% endif %}
+                                            </td>
+                                            <td><strong>{{ ticket_status.ticket.magasin }}</strong></td>
+                                            <td>{{ ticket_status.ticket.numero_ticket|default:"-" }}</td>
+                                            <td>
+                                                <span class="badge {% if ticket_status.causes_overflow %}bg-danger{% elif ticket_status.is_over_budget %}bg-warning{% else %}bg-success{% endif %}">
+                                                    {{ ticket_status.ticket.total|floatformat:3 }} DT
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if ticket_status.ticket.articles_data %}
+                                                    <small>{{ ticket_status.ticket.articles_data|length }} article(s)</small>
+                                                {% else %}
+                                                    <small class="text-muted">Aucun article</small>
+                                                {% endif %}
+                                            </td>
+                                            {% if budget_info.budget_exists %}
+                                            <td>
+                                                {% if ticket_status.running_total %}
+                                                    {% if ticket_status.causes_overflow %}
+                                                        <span class="badge bg-danger">
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>Dépassement
+                                                        </span>
+                                                    {% elif ticket_status.is_over_budget %}
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="fas fa-warning me-1"></i>Hors budget
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check me-1"></i>Dans budget
+                                                        </span>
+                                                    {% endif %}
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Cumulé: {{ ticket_status.running_total|floatformat:3 }} DT
+                                                        ({{ ticket_status.percentage_of_budget|floatformat:1 }}%)
+                                                    </small>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-calendar-times me-1"></i>Hors période
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            {% endif %}
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-info" onclick="viewTicketDetails({{ ticket_status.ticket.id }})">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                -->
+                    <!-- Légende des codes couleur -->
+                    <!--{% if budget_info.budget_exists %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Légende des Codes Couleur
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="badge bg-success me-2">Normal</div>
+                                        <small>Ticket dans les limites du budget</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="badge bg-danger me-2">Rouge</div>
+                                        <small>Ticket ayant causé le dépassement</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="badge bg-warning text-dark me-2">Orange</div>
+                                        <small>Ticket ajouté après dépassement</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        {% if budget_info.budget_exists %}
+                            <h5 class="text-muted mb-2">Aucun ticket pour cette période de budget</h5>
+                            <p class="text-muted">
+                                Il n'y a aucun ticket pour la période 
+                                {% if budget_info.budget_type == 'monthly' %}
+                                    du mois {{ budget_info.current_month }}/{{ budget_info.current_year }}
+                                {% else %}
+                                    de l'année {{ budget_info.current_year }}
+                                {% endif %}.
+                            </p>
+                            <p class="text-muted">Votre budget de {{ budget_info.budget_amount|floatformat:3 }} DT n'a pas encore été utilisé.</p>
+                        {% else %}
+                            <h5 class="text-muted mb-2">Aucun ticket trouvé</h5>
+                            <p class="text-muted">Il n'y a aucun ticket dans votre historique.</p>
+                            <p class="text-muted">Commencez par définir un budget et analyser vos premiers tickets.</p>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'upload_ticket' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Analyser un Ticket
+                        </a>
+                    </div>
+                    {% endif %}-->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Bilan Cumulatif -->
+    <div class="modal fade" id="cumulativeModal" tabindex="-1" aria-labelledby="cumulativeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="cumulativeModalLabel">
+                        <i class="fas fa-file-excel me-2"></i>Bilan Comptable Cumulatif
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="cumulativeForm" method="post" action="{% url 'download_cumulative_excel' %}">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label"><strong>Date de début :</strong></label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date">
+                                    <small class="form-text text-muted">Laissez vide pour inclure toutes les dates</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label"><strong>Date de fin :</strong></label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date">
+                                    <small class="form-text text-muted">Laissez vide pour inclure toutes les dates</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Informations :</h6>
+                            <ul class="mb-0">
+                                <li><strong>Nombre total de tickets :</strong> {{ ticket_count }}</li>
+                                <li><strong>Montant total :</strong> {{ total_amount|floatformat:3 }} DT</li>
+                                <li><strong>Période :</strong> Tous les tickets analysés</li>
+                            </ul>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Annuler
+                    </button>
+                    <button type="submit" form="cumulativeForm" class="btn btn-success">
+                        <i class="fas fa-download me-2"></i>Télécharger Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function viewTicketDetails(ticketId) {
+            // Fonction pour afficher les détails d'un ticket
+            alert('Fonctionnalité à venir : Affichage des détails du ticket ' + ticketId);
+        }
+        
+        // Validation du formulaire cumulatif
+        const cumulativeForm = document.getElementById('cumulativeForm');
+        if (cumulativeForm) {
+            cumulativeForm.addEventListener('submit', function(e) {
+                const startDate = document.getElementById('start_date').value;
+                const endDate = document.getElementById('end_date').value;
+                
+                if (startDate && endDate && startDate > endDate) {
+                    e.preventDefault();
+                    alert('La date de début ne peut pas être postérieure à la date de fin.');
+                    return false;
+                }
+                
+                // Afficher un message de chargement
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération en cours...';
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+        
+        // Fonctions pour le filtrage des données comptables
+        function filterAccountingData() {
+            const startDate = document.getElementById('filter_start_date').value;
+            const endDate = document.getElementById('filter_end_date').value;
+            
+            // Afficher un indicateur de chargement
+            const filterBtn = document.querySelector('button[onclick="filterAccountingData()"]');
+            const originalText = filterBtn.innerHTML;
+            filterBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Filtrage...';
+            filterBtn.disabled = true;
+            
+            // Préparer les données pour la requête AJAX
+            const formData = new FormData();
+            if (startDate) formData.append('start_date', startDate);
+            if (endDate) formData.append('end_date', endDate);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            
+            // Effectuer la requête AJAX
+            fetch('{% url "filter_accounting_data" %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Stocker les totaux par compte globalement
+                    window.currentAccountTotals = data.account_totals;
+                    
+                    updateAccountingTable(data.entries);
+                    updateAccountTotals(data.account_totals);
+                    updateSummary(data.summary);
+                } else {
+                    alert('Erreur lors du filtrage : ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur AJAX:', error);
+                alert('Erreur lors de la communication avec le serveur');
+            })
+            .finally(() => {
+                // Restaurer le bouton
+                filterBtn.innerHTML = originalText;
+                filterBtn.disabled = false;
+            });
+        }
+        
+        function resetFilters() {
+            document.getElementById('filter_start_date').value = '';
+            document.getElementById('filter_end_date').value = '';
+            filterAccountingData(); // Recharger toutes les données
+        }
+        
+        function updateAccountingTable(entries) {
+            const tbody = document.getElementById('accounting-entries');
+            tbody.innerHTML = '';
+            
+            entries.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.date_ecriture}</td>
+                    <td><strong>${entry.compte}</strong></td>
+                    <td>${entry.description}</td>
+                    <td>${entry.libelle_ecriture}</td>
+                    <td class="text-end">${entry.debit} DT</td>
+                    <td class="text-end">${entry.credit || '-'} DT</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateAccountTotals(accountTotals) {
+            const tbody = document.getElementById('account-totals');
+            tbody.innerHTML = '';
+            
+            // accountTotals est un objet, pas un tableau
+            Object.keys(accountTotals).forEach(compte => {
+                const totals = accountTotals[compte];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${compte}</strong></td>
+                    <td class="text-end">${totals.debit.toFixed(3)} DT</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateSummary(summary) {
+            document.getElementById('total-entries').textContent = summary.total_entries;
+            document.getElementById('total-debit').textContent = summary.total_debit.toFixed(3) + ' DT';
+            document.getElementById('total-accounts').textContent = summary.total_accounts;
+            
+            // Formater la période
+            const periodText = `${summary.period.start} - ${summary.period.end}`;
+            document.getElementById('period-display').textContent = periodText;
+        }
+        
+        // Charger les données initiales au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Charger toutes les données comptables au démarrage
+            filterAccountingData();
+            
+            // Initialiser la barre de progression du budget
+            initBudgetProgress();
+        });
+        
+        // Fonction pour initialiser la barre de progression du budget
+        function initBudgetProgress() {
+            {% if budget_info.budget_exists %}
+            const currentExpenses = {{ budget_info.current_expenses|default:0 }};
+            const budgetAmount = {{ budget_info.budget_amount|default:1 }};
+            const progressPercent = (currentExpenses / budgetAmount) * 100;
+            const progressBar = document.getElementById('budgetProgressBar');
+            const progressText = document.getElementById('budgetProgressText');
+            
+            if (progressBar && progressText) {
+                const displayPercent = Math.min(progressPercent, 100);
+                progressBar.style.width = displayPercent + '%';
+                progressText.textContent = progressPercent.toFixed(1) + '%';
+                
+                if (progressPercent > 100) {
+                    progressBar.className = 'progress-bar bg-danger';
+                } else if (progressPercent > 80) {
+                    progressBar.className = 'progress-bar bg-warning';
+                } else {
+                    progressBar.className = 'progress-bar bg-success';
+                }
+            }
+            {% endif %}
+        }
+        
+        // Gestion du formulaire de budget
+        document.getElementById('budgetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const budgetType = document.querySelector('input[name="budget_type"]:checked').value;
+            const budgetAmount = document.getElementById('budget_amount').value;
+            
+            if (!budgetAmount || parseFloat(budgetAmount) <= 0) {
+                alert('Veuillez saisir un montant de budget valide.');
+                return;
+            }
+            
+            formData.append('budget_type', budgetType);
+            formData.append('montant', budgetAmount);
+            formData.append('year', document.getElementById('budget_year').value);
+            formData.append('month', document.getElementById('budget_month').value);
+            
+            fetch('{% url "manage_budget" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    // Recharger la page pour voir les changements
+                    window.location.href = '{% url "view_history" %}?budget_type=' + budgetType;
+                } else {
+                    alert('Erreur: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la sauvegarde du budget.');
+            });
+        });
+        
+        // Gestion du changement de type de budget
+        document.querySelectorAll('input[name="budget_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const budgetType = this.value;
+                const monthSelector = document.getElementById('month_selector');
+                
+                // Afficher/masquer le sélecteur de mois
+                if (budgetType === 'monthly') {
+                    monthSelector.style.display = 'block';
+                } else {
+                    monthSelector.style.display = 'none';
+                }
+            });
+        });
+        
+        // Gestion du bouton "Changer Période"
+        document.getElementById('changePeriodBtn').addEventListener('click', function() {
+            const budgetType = document.querySelector('input[name="budget_type"]:checked').value;
+            const selectedYear = document.getElementById('budget_year').value;
+            const selectedMonth = document.getElementById('budget_month').value;
+            
+            let url = '{% url "view_history" %}?budget_type=' + budgetType + '&year=' + selectedYear;
+            if (budgetType === 'monthly') {
+                url += '&month=' + selectedMonth;
+            }
+            
+            window.location.href = url;
+        });
+        
+        // Gestion du changement de période dans les sélecteurs
+        document.getElementById('budget_year').addEventListener('change', function() {
+            // Auto-changer la période quand l'année change
+            const budgetType = document.querySelector('input[name="budget_type"]:checked').value;
+            const selectedYear = this.value;
+            const selectedMonth = document.getElementById('budget_month').value;
+            
+            let url = '{% url "view_history" %}?budget_type=' + budgetType + '&year=' + selectedYear;
+            if (budgetType === 'monthly') {
+                url += '&month=' + selectedMonth;
+            }
+            
+            window.location.href = url;
+        });
+        
+        document.getElementById('budget_month').addEventListener('change', function() {
+            // Auto-changer la période quand le mois change (seulement pour budget mensuel)
+            const budgetType = document.querySelector('input[name="budget_type"]:checked').value;
+            if (budgetType === 'monthly') {
+                const selectedYear = document.getElementById('budget_year').value;
+                const selectedMonth = this.value;
+                
+                const url = '{% url "view_history" %}?budget_type=' + budgetType + '&year=' + selectedYear + '&month=' + selectedMonth;
+                window.location.href = url;
+            }
+        });
+        
+        // Fonction pour afficher les détails d'un ticket dans un modal
+        function viewTicketDetails(ticketId) {
+            // Récupérer les détails du ticket
+            fetch(`/ticket/${ticketId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        populateTicketModal(data.ticket);
+                        $('#ticketModal').modal('show');
+                    } else {
+                        alert('Erreur lors du chargement du ticket: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors du chargement du ticket');
+                });
+        }
+        
+        // Fonction pour remplir le modal avec les données du ticket
+        function populateTicketModal(ticket) {
+            document.getElementById('ticketId').value = ticket.id;
+            document.getElementById('editMagasin').value = ticket.magasin;
+            document.getElementById('editNumeroTicket').value = ticket.numero_ticket;
+            document.getElementById('editDateTicket').value = ticket.date_ticket;
+            document.getElementById('editTotal').value = ticket.total;
+            
+            // Afficher les articles
+            const articlesContainer = document.getElementById('articlesContainer');
+            articlesContainer.innerHTML = '';
+            
+            if (ticket.articles_data && ticket.articles_data.length > 0) {
+                ticket.articles_data.forEach((article, index) => {
+                    addArticleRow(article, index);
+                });
+            } else {
+                addArticleRow({nom: '', prix: ''}, 0);
+            }
+        }
+        
+        // Fonction pour ajouter une ligne d'article
+        function addArticleRow(article, index) {
+            const articlesContainer = document.getElementById('articlesContainer');
+            const articleRow = document.createElement('div');
+            articleRow.className = 'row mb-2 article-row';
+            articleRow.innerHTML = `
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="article_nom_${index}" value="${article.nom || ''}" placeholder="Nom de l'article">
+                </div>
+                <div class="col-md-4">
+                    <input type="number" class="form-control" name="article_prix_${index}" value="${article.prix || ''}" step="0.001" placeholder="Prix">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeArticleRow(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            articlesContainer.appendChild(articleRow);
+        }
+        
+        // Fonction pour supprimer une ligne d'article
+        function removeArticleRow(button) {
+            button.closest('.article-row').remove();
+        }
+        
+        // Fonction pour ajouter un nouvel article
+        function addNewArticle() {
+            const articlesContainer = document.getElementById('articlesContainer');
+            const index = articlesContainer.children.length;
+            addArticleRow({nom: '', prix: ''}, index);
+        }
+        
+        // Fonction pour sauvegarder les modifications du ticket
+        function saveTicketChanges() {
+            const ticketId = document.getElementById('ticketId').value;
+            const formData = new FormData();
+            
+            // Ajouter les données de base
+            formData.append('magasin', document.getElementById('editMagasin').value);
+            formData.append('numero_ticket', document.getElementById('editNumeroTicket').value);
+            formData.append('date_ticket', document.getElementById('editDateTicket').value);
+            formData.append('total', document.getElementById('editTotal').value);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            
+            // Collecter les articles
+            const articles = [];
+            const articleRows = document.querySelectorAll('.article-row');
+            articleRows.forEach((row, index) => {
+                const nom = row.querySelector(`input[name="article_nom_${index}"]`).value;
+                const prix = row.querySelector(`input[name="article_prix_${index}"]`).value;
+                if (nom.trim() || prix.trim()) {
+                    articles.push({
+                        nom: nom.trim(),
+                        prix: parseFloat(prix) || 0
+                    });
+                }
+            });
+            
+            formData.append('articles_data', JSON.stringify(articles));
+            
+            // Afficher un indicateur de chargement
+            const saveBtn = document.getElementById('saveTicketBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sauvegarde...';
+            saveBtn.disabled = true;
+            
+            // Envoyer la requête
+            fetch(`/ticket/${ticketId}/update/`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Ticket mis à jour avec succès!');
+                    $('#ticketModal').modal('hide');
+                    // Recharger la page pour voir les changements
+                    window.location.reload();
+                } else {
+                    alert('Erreur lors de la sauvegarde: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la sauvegarde');
+            })
+            .finally(() => {
+                // Restaurer le bouton
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            });
+        }
+    </script>
+    
+    <!-- Modal pour l'édition des tickets -->
+    <div class="modal fade" id="ticketModal" tabindex="-1" aria-labelledby="ticketModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ticketModalLabel">
+                        <i class="fas fa-edit me-2"></i>Modifier le Ticket
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTicketForm">
+                        <input type="hidden" id="ticketId" name="ticket_id">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editMagasin" class="form-label">Magasin</label>
+                                <input type="text" class="form-control" id="editMagasin" name="magasin">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editNumeroTicket" class="form-label">Numéro de Ticket</label>
+                                <input type="text" class="form-control" id="editNumeroTicket" name="numero_ticket">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="editDateTicket" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="editDateTicket" name="date_ticket">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTotal" class="form-label">Total (DT)</label>
+                                <input type="number" class="form-control" id="editTotal" name="total" step="0.001">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Articles</label>
+                            <div id="articlesContainer">
+                                <!-- Les articles seront ajoutés ici dynamiquement -->
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addNewArticle()">
+                                <i class="fas fa-plus me-2"></i>Ajouter un Article
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Annuler
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveTicketBtn" onclick="saveTicketChanges()">
+                        <i class="fas fa-save me-2"></i>Sauvegarder les Modifications
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% if global_account_totals %}
+<div class="card mt-4 mb-5">
+    <div class="card-header bg-dark text-white py-2">
+        <h5 class="mb-0"><i class="fas fa-globe me-2"></i>Distribution Globale des Comptes (Toutes Périodes)</h5>
+    </div>
+    <div class="card-body p-2">
+        <div class="row">
+            <div class="col-md-6">
+                <canvas id="globalPieAccounts" height="200"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="globalBarAccounts" height="200"></canvas>
+            </div>
+        </div>
+        <div class="table-responsive mt-3">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Compte</th>
+                        <th class="text-end">Total Débit Global</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for g in global_account_totals %}
+                    <tr>
+                        <td><strong>{{ g.compte }}</strong></td>
+                        <td class="text-end">{{ g.total_debit|floatformat:3 }} DT</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const gLabels = [{% for g in global_account_totals %}'{{ g.compte }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+    const gDebit = [{% for g in global_account_totals %}{{ g.total_debit|floatformat:'3' }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+    if (window.Chart) {
+        new Chart(document.getElementById('globalPieAccounts'), {
+            type: 'doughnut',
+            data: {labels: gLabels, datasets:[{data: gDebit, backgroundColor:['#2d5016','#4a7c59','#6b8e23','#f7931e','#ff6b35','#228b22','#ddbf94','#2c3e2d','#6b8e23','#3a9d35']}]},
+            options:{
+                maintainAspectRatio: false,
+                plugins:{
+                    title:{display:true,text:'Répartition Globale Débits',font:{size:12}},
+                    legend:{position:'top',labels:{font:{size:10},boxWidth:10,padding:8}}
+                }
+            }
+        });
+        new Chart(document.getElementById('globalBarAccounts'), {
+            type: 'bar',
+            data:{labels:gLabels,datasets:[{label:'Débit',data:gDebit,backgroundColor:'#6b8e23'}]},
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{title:{display:true,text:'Débits Globaux',font:{size:12}},legend:{labels:{font:{size:10}}}},
+                scales:{y:{beginAtZero:true}}
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Pro ZITOUNA - Analyse Intelligente de Tickets | Banque Zitouna</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'ocrapp/css/custom.css' %}">
+    <style>
+        :root {
+            --primary-color: #2d5016;  /* Vert foncé ZITOUNA */
+            --secondary-color: #4a7c59; /* Vert moyen ZITOUNA */
+            --accent-color: #6b8e23;    /* Vert olive */
+            --light-color: #f5f5dc;     /* Beige clair */
+            --dark-color: #2c3e2d;      /* Vert très foncé */
+            --success-color: #228b22;   /* Vert succès */
+            --beige-primary: #f5f5dc;   /* Beige principal */
+            --beige-secondary: #ddbf94; /* Beige plus foncé */
+            --green-primary: #2d5016;   /* Vert principal ZITOUNA */
+            --green-secondary: #4a7c59; /* Vert secondaire */
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--beige-primary) 0%, var(--beige-secondary) 50%, var(--green-secondary) 100%);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+        
+        .upload-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            margin-top: 3rem;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-container:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .upload-header {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .custom-file-upload {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .custom-file-upload:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+        
+        .custom-file-upload i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        #file-name {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .btn-upload {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-upload:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .result-container {
+            margin-top: 3rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            display: none;
+        }
+        
+        .result-header {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 5px;
+            margin-top: 1rem;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 1rem;
+            display: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .custom-file-upload.has-image {
+            padding: 1rem;
+        }
+
+        .has-image i, .has-image #upload-text {
+            display: none;
+        }
+
+        /* Styles pour les cartes OCR */
+        .ocr-text-container {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            border: 1px solid #e9ecef;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .ocr-text-container pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .card {
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            border-bottom: none;
+            font-weight: 600;
+        }
+
+        .alert-info {
+            background-color: rgba(13, 202, 240, 0.1);
+            border-color: rgba(13, 202, 240, 0.2);
+            color: #055160;
+        }
+
+        /* Styles pour le spinner LLM */
+        #llmLoadingSpinner {
+            background-color: rgba(25, 135, 84, 0.1);
+            border-radius: 10px;
+            padding: 2rem;
+            border: 1px solid rgba(25, 135, 84, 0.2);
+        }
+
+        #llmLoadingSpinner .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        #llmLoadingSpinner p {
+            margin-top: 1rem;
+            font-size: 1.1rem;
+        }
+
+        #llmLoadingSpinner small {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        /* Styles personnalisés ZITOUNA */
+        .upload-container {
+            background: linear-gradient(145deg, white 0%, var(--beige-primary) 100%);
+            border: 2px solid var(--beige-secondary);
+        }
+        
+        .custom-file-upload {
+            background: linear-gradient(135deg, var(--beige-primary) 0%, rgba(245, 245, 220, 0.7) 100%);
+            border-color: var(--green-secondary);
+        }
+        
+        .custom-file-upload:hover {
+            background: linear-gradient(135deg, var(--beige-secondary) 0%, var(--beige-primary) 100%);
+            border-color: var(--green-primary);
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, white 0%, var(--beige-primary) 100%);
+            border: 1px solid var(--beige-secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(45, 80, 22, 0.15);
+            border-color: var(--green-secondary);
+        }
+        
+        .card {
+            background: linear-gradient(135deg, white 0%, var(--beige-primary) 100%);
+            border-color: var(--beige-secondary);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-secondary) 100%);
+            border-color: var(--green-primary);
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, var(--green-secondary) 0%, var(--green-primary) 100%);
+            border-color: var(--green-secondary);
+            transform: translateY(-2px);
+        }
+        
+        .status-indicator {
+            background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-secondary) 100%);
+            color: white;
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, var(--beige-primary) 0%, rgba(245, 245, 220, 0.8) 100%);
+            border-color: var(--green-secondary);
+            color: var(--dark-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header avec Logo ZITOUNA -->
+    <header class="app-header" style="background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-secondary) 100%); padding: 1rem 0; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="logo-container d-flex align-items-center">
+                        <img src="{% static 'ocrapp/images/ZITOUNA.webp' %}" alt="Logo ZITOUNA" style="height: 60px; margin-right: 15px; border-radius: 8px;">
+                    </div>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="company-info">
+                        <h1 style="color: white; font-weight: 700; margin-bottom: 0.5rem; font-size: 2rem;">OCR Pro - ZITOUNA</h1>
+                        <p style="color: rgba(255,255,255,0.9); margin-bottom: 0; font-size: 1.1rem;">Solution d'Analyse Intelligente de Tickets de Caisse</p>
+                        <p style="color: rgba(255,255,255,0.8); margin-bottom: 0; font-size: 0.9rem;">Banque Zitouna</p>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <div class="d-flex flex-column align-items-end">
+                        <img src="{% static 'ocrapp/images/banque-zitouna-tamouil-dirasset1.png' %}" alt="Banque Zitouna Tamouil Dirasi" style="height: 50px; margin-bottom: 10px; border-radius: 5px;">
+                        <div class="status-indicator" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                            <i class="fas fa-check-circle" style="color: #4bb543;"></i>
+                            Système Opérationnel
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Fonctionnalités Principales -->
+    <!--<section class="py-5" style="background: linear-gradient(135deg, var(--beige-primary) 0%, rgba(245, 245, 220, 0.8) 100%);">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="mb-3" style="color: var(--primary-color); font-weight: 700;">Fonctionnalités Avancées</h2>
+                    <p class="lead text-muted">Technologie OCR de pointe avec Intelligence Artificielle</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <img src="{% static 'ocrapp/images/document-scan.svg' %}" alt="OCR" style="width: 40px; height: 40px;">
+                        </div>
+                        <h3>OCR Multi-Moteurs</h3>
+                        <p>Extraction de texte avec DocTR, Tesseract et Docling pour une précision maximale</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <img src="{% static 'ocrapp/images/ai-brain.svg' %}" alt="IA" style="width: 40px; height: 40px;">
+                        </div>
+                        <h3>Intelligence Artificielle</h3>
+                        <p>Analyse avancée avec Qwen3-30B et Google Gemini pour une compréhension contextuelle</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <img src="{% static 'ocrapp/images/analytics.svg' %}" alt="Analytics" style="width: 40px; height: 40px;">
+                        </div>
+                        <h3>Rapports Comptables</h3>
+                        <p>Génération automatique de bilans comptables en PDF et Excel</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>-->
+
+    <!-- Section Démonstration -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h3 class="mb-4" style="color: var(--primary-color); font-weight: 600;">Comment ça fonctionne ?</h3>
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                            <span class="badge bg-primary rounded-circle" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">1</span>
+                        </div>
+                        <div>
+                            <h5 class="mb-2">Téléchargez votre ticket</h5>
+                            <p class="text-muted mb-0">Glissez-déposez ou sélectionnez une image de votre ticket de caisse (JPG, PNG, PDF)</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                            <span class="badge bg-success rounded-circle" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">2</span>
+                        </div>
+                        <div>
+                            <h5 class="mb-2">Extraction OCR automatique</h5>
+                            <p class="text-muted mb-0">3 moteurs OCR analysent simultanément votre document pour une précision maximale</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="feature-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                            <span class="badge bg-warning rounded-circle" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">3</span>
+                        </div>
+                        <div>
+                            <h5 class="mb-2">Analyse IA intelligente</h5>
+                            <p class="text-muted mb-0">L'IA structure les informations et génère automatiquement vos rapports comptables</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <a href="#upload-section" class="btn btn-primary btn-lg">
+                            <i class="fas fa-rocket me-2"></i>Commencer l'analyse
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="position-relative">
+                        <img src="{% static 'ocrapp/images/demo-ticket.svg' %}" alt="Exemple de ticket" class="img-fluid" style="max-width: 250px; filter: drop-shadow(0 10px 25px rgba(0,0,0,0.15));">
+                        <div class="position-absolute top-0 end-0" style="transform: translate(20px, -20px);">
+                            <img src="{% static 'ocrapp/images/success-check.svg' %}" alt="Succès" style="width: 60px; height: 60px;">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Exemple de ticket analysé avec succès</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container" id="upload-section">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="upload-container">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h1 class="mb-0">
+                            <i class="fas fa-upload me-2"></i>Analyser un Ticket
+                        </h1>
+                        <div>
+                            <a href="{% url 'view_history' %}" class="btn btn-success me-2">
+                                <i class="fas fa-history me-2"></i>Historique
+                            </a>
+                            <button type="button" class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#helpModal">
+                                <i class="fas fa-question-circle me-2"></i>Aide
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-icon text-center d-flex flex-column align-items-center">
+                        <img src="{% static 'ocrapp/images/ZITOUNA.webp' %}" alt="Logo ZITOUNA" style="height: 50px; margin-bottom: 15px; border-radius: 8px;">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h1 class="upload-header">Analyse de Ticket - ZITOUNA</h1>
+                    <p class="text-center mb-2">Téléchargez une image de ticket et choisissez votre méthode d'analyse</p>
+                    <p class="text-center mb-4 text-muted"><small><i class="fas fa-university me-1"></i>Banque Zitouna</small></p>
+                    
+                    <!-- Informations sur les boutons -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-robot text-primary mb-2" style="font-size: 2rem;"></i>
+                                    <h6 class="card-title">Extraction OCR</h6>
+                                    <p class="card-text small">Extrait le texte avec Doctr, Tesseract et Docling</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-brain text-success mb-2" style="font-size: 2rem;"></i>
+                                    <h6 class="card-title">Analyse IA</h6>
+                                    <p class="card-text small">Analyse le texte avec Qwen3-30B pour extraire les informations</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cogs text-info mb-2" style="font-size: 2rem;"></i>
+                                    <h6 class="card-title">Analyse Complète</h6>
+                                    <p class="card-text small">Combine OCR + IA en une seule opération</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        <label class="custom-file-upload d-flex flex-column align-items-center justify-content-center" id="uploadLabel">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <span id="upload-text">Glissez-déposez votre ticket ici ou cliquez pour sélectionner</span>
+                            <small class="text-muted mt-2">Formats supportés: JPG, PNG, PDF</small>
+                            <img id="imagePreview" class="image-preview" alt="Aperçu du ticket">
+                            <input type="file" name="image" id="fileInput" accept="image/*" required class="d-none">
+                        </label>
+                        <div class="progress-bar" id="progressBar"></div>
+
+                        <div class="text-center">
+                            <div class="row justify-content-center">
+                                <div class="col-md-12">
+                                    <input type="hidden" name="ocr_all" value="1">
+                                    <button type="submit" name="analyze_all_models" value="1" class="btn btn-primary btn-upload rounded-pill w-100 mb-3" style="background-color: #0d6efd; border-color: #0d6efd; color: white; padding: 15px 20px; font-size: 16px;">
+                                        <i class="fas fa-play me-2"></i>Analyser le ticket (OCR + Gemini + Qwen)
+                                    </button>
+                                </div>
+                                
+                            <!-- removed duplicate Gemini block -->
+                        {% if llm_analysis %}
+                         <!--Si on a fait Qwen --> 
+                        <!--<form method="post" id="geminiAltForm" class="mt-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="analyze_gemini" value="1">
+                            <input type="hidden" name="ocr_doctr" value="{{ ocr_results.doctr }}">
+                            <input type="hidden" name="ocr_tesseract" value="{{ ocr_results.tesseract }}">
+                            <input type="hidden" name="ocr_docling" value="{{ ocr_results.docling }}">
+                            <button type="submit" class="btn btn-purple btn-upload rounded-pill" style="background-color: #6f42c1; border-color: #6f42c1; color: white;">
+                                <i class="fas fa-robot me-2"></i>Analyser aussi avec Google Gemini
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <!-- Alternative actions commented out -->
+                    </div>
+                    <!-- Bloc alternatif Gemini/Qwen supprimé pour corriger l'erreur de balise -->
+                    
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="mt-2">Analyse en cours... </p>
+                    </div>
+                </div>
+                
+                {% if ocr_results %}
+                <!-- Résultats des 3 OCR -->
+                <div class="result-container mt-4" style="display: block;">
+                    <h2 class="result-header">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        {% if llm_analysis %}
+                            Extraction OCR (Étape 1/2)
+                        {% else %}
+                            Résultats des 3 Moteurs OCR
+                        {% endif %}
+                    </h2>
+                    
+                    <div class="row">
+                        <!-- Doctr -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-robot me-2"></i>Doctr</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="ocr-text-container">
+                                        <pre>{{ ocr_results.doctr }}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tesseract -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Tesseract</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="ocr-text-container">
+                                        <pre>{{ ocr_results.tesseract }}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Docling -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-brain me-2"></i>Docling</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="ocr-text-container">
+                                        <pre>{{ ocr_results.docling }}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+                {% if llm_analysis %}
+                <!-- Résultats de l'analyse LLM -->
+                <div class="result-container mt-4" style="display: block;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="result-header mb-0">
+                            <i class="fas fa-magic me-2"></i>
+                            {% if ocr_results %}
+                                Analyse IA avec Qwen3-30B (Étape 2/2)
+                            {% else %}
+                                Analyse IA avec Qwen3-30B
+                            {% endif %}
+                        </h2>
+                        <div class="status-indicator status-success">
+                            <i class="fas fa-check-circle"></i>
+                            Analyse Terminée
+                        </div>
+                    </div>
+                    
+                    {% if llm_analysis.error %}
+                    <div class="alert alert-danger">
+                        <h5><i class="fas fa-exclamation-triangle me-2"></i>Erreur lors de l'analyse LLM</h5>
+                        <p><strong>{{ llm_analysis.error }}</strong></p>
+                        
+                        {% if "timeout" in llm_analysis.error|lower %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Suggestions :</h6>
+                            <ul>
+                                <li>Le modèle qwen3-30b-a3b peut être lent. L'application va automatiquement essayer avec des modèles plus rapides (qwen, puis llama2).</li>
+                                <li>Vérifiez que votre serveur Ollama a suffisamment de RAM (au moins 8GB recommandé)</li>
+                                <li>Essayez de redémarrer le serveur Ollama</li>
+                                <li>Installez des modèles plus rapides : <code>ollama pull qwen</code> et <code>ollama pull llama2</code></li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if "insuffisants" in llm_analysis.error|lower or "vide" in llm_analysis.error|lower or "plus d'informations" in llm_analysis.error|lower %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Suggestions :</h6>
+                            <ul>
+                                <li>Les textes OCR extraits sont vides ou insuffisants</li>
+                                <li>Vérifiez que l'image est de bonne qualité et bien orientée</li>
+                                <li>Essayez avec une image plus claire ou mieux éclairée</li>
+                                <li>Vérifiez que l'image contient bien du texte lisible</li>
+                                <li>Assurez-vous que l'image n'est pas trop petite ou floue</li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if "modèle rapide" in llm_analysis.error|lower %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Suggestions :</h6>
+                            <ul>
+                                <li>Le modèle qwen est aussi trop lent. L'application va essayer avec llama2.</li>
+                                <li>Installez llama2 : <code>ollama pull llama2</code></li>
+                                <li>Ou utilisez un modèle encore plus léger : <code>ollama pull llama2:7b</code></li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if "modèle ultra-rapide" in llm_analysis.error|lower %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Suggestions :</h6>
+                            <ul>
+                                <li>Tous les modèles sont trop lents. Essayez d'installer un modèle plus léger :</li>
+                                <li><code>ollama pull llama2:7b</code> (modèle 7B paramètres)</li>
+                                <li><code>ollama pull phi</code> (modèle très rapide)</li>
+                                <li>Ou redémarrez Ollama avec plus de ressources</li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if "connexion" in llm_analysis.error|lower %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Suggestions :</h6>
+                            <ul>
+                                <li>Vérifiez que Ollama est démarré : <code>ollama serve</code></li>
+                                <li>Vérifiez que le modèle qwen3-30b-a3b est installé : <code>ollama list</code></li>
+                                <li>Si le modèle n'est pas installé : <code>ollama pull qwen3-30b-a3b</code></li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if llm_analysis.raw_response %}
+                        <hr>
+                        <details>
+                            <summary><strong>Réponse brute du LLM :</strong></summary>
+                            <pre class="small mt-2" style="background-color: #f8f9fa; padding: 1rem; border-radius: 5px; max-height: 200px; overflow-y: auto;">{{ llm_analysis.raw_response }}</pre>
+                        </details>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-table me-2"></i>Informations Extraites du Ticket</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="qwenEditForm" class="mt-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-store me-2"></i>Magasin</strong></label>
+                                                    <input type="text" class="form-control" id="qwen_magasin" value="{{ llm_analysis.Magasin|default:'' }}" placeholder="Nom du magasin">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-calendar me-2"></i>Date</strong></label>
+                                                    <input type="date" class="form-control" id="qwen_date" value="{{ llm_analysis.Date|default:'' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-receipt me-2"></i>Numéro de Ticket</strong></label>
+                                                    <input type="text" class="form-control" id="qwen_numero" value="{{ llm_analysis.NumeroTicket|default:'' }}" placeholder="Numéro du ticket">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-euro-sign me-2"></i>Total</strong></label>
+                                                    <input type="text" class="form-control" id="qwen_total" value="{{ llm_analysis.Total|default:'' }}" placeholder="Montant total" onchange="calculateQwenTVA()">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-percentage me-2"></i>Taux TVA (%)</strong></label>
+                                                    <input type="number" class="form-control" id="qwen_tva_rate" value="19" min="0" max="100" step="0.1" onchange="calculateQwenTVA()" placeholder="Taux TVA">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-calculator me-2"></i>Montant TVA</strong></label>
+                                                    <input type="text" class="form-control" id="qwen_tva_amount" readonly placeholder="Montant TVA calculé">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <button type="button" class="btn btn-success btn-sm" onclick="saveQwenData()">
+                                                <i class="fas fa-save me-2"></i>Sauvegarder les modifications
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <!-- Visible accounting fields for Qwen block (synced to hidden accounting inputs) -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label"><strong>Compte comptable</strong></label>
+                                            <input type="text" id="qwen_compte" class="form-control" value="606100" placeholder="Compte (ex: 606100)">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label"><strong>Description écriture</strong></label>
+                                            <input type="text" id="qwen_description" class="form-control" value="Achat divers" placeholder="Description">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6><i class="fas fa-shopping-cart me-2"></i>Articles</h6>
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="addQwenArticle()">
+                                                <i class="fas fa-plus me-2"></i>Ajouter Article
+                                            </button>
+                                        </div>
+                                        <div id="qwenArticlesContainer">
+                                            {% if llm_analysis.Articles %}
+                                                {% for article in llm_analysis.Articles %}
+                                                <div class="row mb-2 qwen-article-row">
+                                                    <div class="col-md-6">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Nom de l'article" value="{{ article.nom }}">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Prix" value="{{ article.prix }}">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <button type="button" class="btn btn-danger btn-sm" onclick="removeQwenArticle(this)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="row mb-2 qwen-article-row">
+                                                    <div class="col-md-6">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Nom de l'article">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Prix">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <button type="button" class="btn btn-danger btn-sm" onclick="removeQwenArticle(this)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    {% if llm_analysis.texte_fusionne and llm_analysis.texte_fusionne|length < 500 %}
+                                    <div class="mt-4">
+                                        <details>
+                                            <summary><strong><i class="fas fa-file-text me-2"></i>Texte Fusionné et Corrigé</strong></summary>
+                                            <div class="bg-light p-3 rounded mt-2" style="font-family: 'Courier New', monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+{{ llm_analysis.texte_fusionne }}
+                                            </div>
+                                        </details>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!--{% if llm_analysis.Commentaire %}
+                                    <div class="alert alert-info mt-3">
+                                        <strong>Commentaire :</strong><br>
+                                        {{ llm_analysis.Commentaire }}
+                                    </div>
+                                    {% endif %}-->
+                                    
+                                    <!-- Bouton Bilan Comptable (toujours actif) -->
+                                    <div class="mt-4">
+                                        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#accountingModal">
+                                            <i class="fas fa-calculator me-2"></i>Générer Bilan Comptable
+                                        </button>
+                                        <small class="text-muted d-block mt-1">Magasin et total recommandés pour pré-remplir le bilan, mais vous pouvez générer le bilan manuellement si l'analyse n'est pas disponible.</small>
+                                    </div>
+                                    <!--
+                                    {% if llm_analysis.ValidationRegex %}
+                                    <div class="alert alert-warning mt-3">
+                                        <strong><i class="fas fa-shield-alt me-2"></i>Validation Regex :</strong><br>
+                                        <ul class="mb-0 mt-2">
+                                            <li><strong>Cohérence totale :</strong> 
+                                                {% if llm_analysis.ValidationRegex.total_coherent %}
+                                                    <span class="badge bg-success">✓ Validé</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">✗ Incohérent</span>
+                                                {% endif %}
+                                            </li>
+                                            <li><strong>Somme des articles :</strong> {{ llm_analysis.ValidationRegex.somme_articles|default:"Non calculé" }}</li>
+                                            <li><strong>Total détecté :</strong> {{ llm_analysis.ValidationRegex.total_detecte|default:"Non détecté" }}</li>
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if llm_analysis.AlerteValidation %}
+                                    <div class="alert alert-danger mt-3">
+                                        <strong><i class="fas fa-exclamation-triangle me-2"></i>Alerte de Validation :</strong><br>
+                                        {{ llm_analysis.AlerteValidation }}
+                                    </div>
+                                    {% endif %}-->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <!-- Image du ticket analysé -->
+                            {% if form.instance.image %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-image me-2"></i>Ticket Analysé</h6>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="text-center">
+                                        <img src="{{ form.instance.image.url }}" 
+                                             alt="Ticket de caisse analysé" 
+                                             class="img-fluid rounded shadow-sm" 
+                                             style="max-height: 300px; max-width: 100%; object-fit: contain; cursor: pointer;"
+                                             onclick="openImageModal('{{ form.instance.image.url }}')"
+                                             title="Cliquez pour agrandir">
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Cliquez pour agrandir
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Détails techniques -->
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-cogs me-2"></i>Détails Techniques</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Modèle utilisé :</strong> Qwen3-30B (HuggingFace)</p>
+                                    <p><strong>Méthode :</strong> Fusion des 3 OCR</p>
+                                    <p><strong>Statut :</strong> <span class="badge bg-success">Succès</span></p>
+                                    
+                                    <div class="mt-3">
+                                        <h6>OCR utilisés :</h6>
+                                        <ul class="list-unstyled small">
+                                            <li><i class="fas fa-robot text-primary"></i> Doctr</li>
+                                            <li><i class="fas fa-eye text-success"></i> Tesseract</li>
+                                            <li><i class="fas fa-brain text-info"></i> Docling</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if gemini_analysis %}
+                <!-- Résultats de l'analyse Google Gemini -->
+                <div class="result-container mt-4" style="display: block;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="result-header mb-0">
+                            <i class="fas fa-brain me-2" style="color: #6f42c1;"></i>
+                            {% if ocr_results %}
+                                Analyse IA avec Google Gemini (Étape 2/2)
+                            {% else %}
+                                Analyse IA avec Google Gemini
+                            {% endif %}
+                        </h2>
+                        <div class="status-indicator status-success">
+                            <i class="fas fa-check-circle"></i>
+                            Analyse Terminée
+                        </div>
+                    </div>
+                    
+                    {% if gemini_analysis.error %}
+                        {% if gemini_analysis.demo_mode %}
+                        <!-- Mode Démo -->
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-info-circle me-2"></i>Mode Démo - Google Gemini</h5>
+                            <p><strong>{{ gemini_analysis.error }}</strong></p>
+                            
+                            {% if gemini_analysis.instructions %}
+                            <div class="mt-3">
+                                <h6>{{ gemini_analysis.instructions.title }}</h6>
+                                <ol>
+                                    {% for step in gemini_analysis.instructions.steps %}
+                                    <li>{{ step }}</li>
+                                    {% endfor %}
+                                </ol>
+                                <div class="mt-2">
+                                    <a href="https://makersuite.google.com/app/apikey" target="_blank" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-external-link-alt me-2"></i>Obtenir une clé API Google
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <!-- Erreur réelle -->
+                        <div class="alert alert-danger">
+                            <h5><i class="fas fa-exclamation-triangle me-2"></i>Erreur lors de l'analyse Gemini</h5>
+                            <p><strong>{{ gemini_analysis.error }}</strong></p>
+                            
+                            {% if "API" in gemini_analysis.error %}
+                                <div class="mt-3">
+                                    <h6>Solutions possibles :</h6>
+                                    <ul>
+                                        <li>Vérifiez que votre clé API Google Generative AI est correctement configurée dans le fichier .env</li>
+                                        <li>Assurez-vous que l'API Google Generative AI est accessible</li>
+                                        <li>Vérifiez votre quota API</li>
+                                    </ul>
+                                </div>
+                            {% endif %}
+                            
+                            {% if gemini_analysis.raw_response %}
+                                <details class="mt-3">
+                                    <summary>Réponse brute de l'API</summary>
+                                    <div class="alert alert-secondary mt-2">
+                                        <pre style="white-space: pre-wrap; font-size: 0.8em;">{{ gemini_analysis.raw_response }}</pre>
+                                    </div>
+                                </details>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header" style="background-color: #6f42c1; color: white;">
+                                    <h5 class="mb-0"><i class="fas fa-table me-2"></i>Informations Extraites du Ticket (Google Gemini)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="geminiEditForm" class="mt-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-store me-2"></i>Magasin</strong></label>
+                                                    <input type="text" class="form-control" id="gemini_magasin" value="{{ gemini_analysis.Magasin|default:'' }}" placeholder="Nom du magasin">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-calendar me-2"></i>Date</strong></label>
+                                                    <input type="date" class="form-control" id="gemini_date" value="{{ gemini_analysis.Date|default:'' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-receipt me-2"></i>Numéro de Ticket</strong></label>
+                                                    <input type="text" class="form-control" id="gemini_numero" value="{{ gemini_analysis.NumeroTicket|default:'' }}" placeholder="Numéro du ticket">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-euro-sign me-2"></i>Total</strong></label>
+                                                    <input type="text" class="form-control" id="gemini_total" value="{{ gemini_analysis.Total|default:'' }}" placeholder="Montant total" onchange="calculateGeminiTVA()">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-percentage me-2"></i>Taux TVA (%)</strong></label>
+                                                    <input type="number" class="form-control" id="gemini_tva_rate" value="19" min="0" max="100" step="0.1" onchange="calculateGeminiTVA()" placeholder="Taux TVA">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label"><strong><i class="fas fa-calculator me-2"></i>Montant TVA</strong></label>
+                                                    <input type="text" class="form-control" id="gemini_tva_amount" readonly placeholder="Montant TVA calculé">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <button type="button" class="btn btn-success btn-sm" onclick="saveGeminiData()">
+                                                <i class="fas fa-save me-2"></i>Sauvegarder les modifications
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <!-- Visible accounting fields for Gemini block (synced to hidden accounting inputs) -->
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label"><strong>Compte comptable</strong></label>
+                                            <input type="text" id="gemini_compte" class="form-control" value="606100" placeholder="Compte (ex: 606100)">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label"><strong>Description écriture</strong></label>
+                                            <input type="text" id="gemini_description" class="form-control" value="Achat divers" placeholder="Description">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6><i class="fas fa-shopping-cart me-2"></i>Articles</h6>
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="addGeminiArticle()">
+                                                <i class="fas fa-plus me-2"></i>Ajouter Article
+                                            </button>
+                                        </div>
+                                        <div id="geminiArticlesContainer">
+                                            {% if gemini_analysis.Articles %}
+                                                {% for article in gemini_analysis.Articles %}
+                                                <div class="row mb-2 gemini-article-row">
+                                                    <div class="col-md-6">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Nom de l'article" value="{{ article.nom }}">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Prix" value="{{ article.prix|default:'' }}">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <button type="button" class="btn btn-danger btn-sm" onclick="removeGeminiArticle(this)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="row mb-2 gemini-article-row">
+                                                    <div class="col-md-6">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Nom de l'article">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input type="text" class="form-control form-control-sm" placeholder="Prix">
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <button type="button" class="btn btn-danger btn-sm" onclick="removeGeminiArticle(this)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    {% if gemini_analysis.texte_fusionne and gemini_analysis.texte_fusionne|length < 500 %}
+                                    <div class="mt-4">
+                                        <details>
+                                            <summary><strong><i class="fas fa-file-text me-2"></i>Texte Fusionné et Corrigé</strong></summary>
+                                            <div class="bg-light p-3 rounded mt-2" style="font-family: 'Courier New', monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+{{ gemini_analysis.texte_fusionne }}
+                                            </div>
+                                        </details>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if gemini_analysis.Commentaire %}
+                                    <div class="alert alert-info mt-3">
+                                        <strong>Commentaire :</strong><br>
+                                        {{ gemini_analysis.Commentaire }}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Bouton Bilan Comptable (toujours actif) -->
+                                    <div class="mt-4">
+                                        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#accountingModal">
+                                            <i class="fas fa-calculator me-2"></i>Générer Bilan Comptable
+                                        </button>
+                                        <small class="text-muted d-block mt-1">Magasin et total recommandés pour pré-remplir le bilan, mais vous pouvez générer le bilan manuellement si l'analyse n'est pas disponible.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <!-- Image du ticket analysé -->
+                            {% if form.instance.image %}
+                            <div class="card mb-3">
+                                <div class="card-header" style="background-color: #6f42c1; color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-image me-2"></i>Ticket Analysé</h6>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="text-center">
+                                        <img src="{{ form.instance.image.url }}" 
+                                             alt="Ticket de caisse analysé" 
+                                             class="img-fluid rounded shadow-sm" 
+                                             style="max-height: 300px; max-width: 100%; object-fit: contain; cursor: pointer;"
+                                             onclick="openImageModal('{{ form.instance.image.url }}')"
+                                             title="Cliquez pour agrandir">
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Cliquez pour agrandir
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Informations techniques -->
+                            <div class="card">
+                                <div class="card-header" style="background-color: #6f42c1; color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations Techniques</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0 small">
+                                        <li><strong>Modèle :</strong> {{ gemini_analysis.model_used|default:"Google Gemini 1.5 Flash" }}</li>
+                                        <li><strong>Timestamp :</strong> {{ gemini_analysis.analysis_timestamp|default:"N/A" }}</li>
+                                    </ul>
+                                    
+                                    {% if gemini_analysis.raw_response %}
+                                    <hr>
+                                    <details>
+                                        <summary><strong>Réponse brute de Gemini :</strong></summary>
+                                        <pre class="small mt-2" style="background-color: #f8f9fa; padding: 1rem; border-radius: 5px; max-height: 200px; overflow-y: auto;">{{ gemini_analysis.raw_response }}</pre>
+                                    </details>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- regex analysis block removed -->
+                                    </div>
+                                    </div>
+                                    
+                                    {% if regex_analysis.timbres_fiscaux %}
+                                    <h6 class="mt-3">Timbres fiscaux détectés :</h6>
+                                    <div class="row">
+                                        {% for timbre in regex_analysis.timbres_fiscaux %}
+                                        <div class="col-md-3">
+                                            <span class="badge bg-info">{{ timbre }}</span>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if regex_analysis.articles %}
+                                    <h6 class="mt-3">Articles détectés :</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Article</th>
+                                                    <th>Prix</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for article in regex_analysis.articles %}
+                                                <tr>
+                                                    <td>{{ article.nom }}</td>
+                                                    <td>{{ article.prix }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if regex_analysis.alerte %}
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        {{ regex_analysis.alerte }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <!-- Image du ticket analysé -->
+                            <!--{% if form.instance.image %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-image me-2"></i>Ticket Analysé</h6>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="text-center">
+                                        <img src="{{ form.instance.image.url }}" 
+                                             alt="Ticket de caisse analysé" 
+                                             class="img-fluid rounded shadow-sm" 
+                                             style="max-height: 300px; max-width: 100%; object-fit: contain; cursor: pointer;"
+                                             onclick="openImageModal('{{ form.instance.image.url }}')"
+                                             title="Cliquez pour agrandir">
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Cliquez pour agrandir
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}-->
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- Image preview modal (used by openImageModal) -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-transparent border-0">
+                <div class="modal-body p-0">
+                    <img id="imageModalImg" src="" alt="Agrandir le ticket" class="img-fluid w-100 rounded" style="object-fit: contain;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accounting modal (Bilan Comptable) -->
+    <div class="modal fade" id="accountingModal" tabindex="-1" aria-labelledby="accountingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="accountingModalLabel"><i class="fas fa-calculator me-2"></i>Bilan Comptable</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="accountingForm" method="post" action="{% url 'download_accounting_excel' %}">
+                        {% csrf_token %}
+                        <!-- analysis choice is computed server-side to avoid template lookup errors -->
+                        <input type="hidden" name="analysis_data" value="{{ accounting_analysis_choice }}">
+
+                        <!-- Hidden input used by client-side validation to detect if analysis data exists -->
+                        <input type="hidden" name="llm_data" value="{{ accounting_llm_data }}">
+                        <!-- If the ticket was saved manually, include its id so server can use stored values -->
+                        {% if form.instance and form.instance.id %}
+                        <input type="hidden" name="ticket_id" value="{{ form.instance.id }}">
+                        {% endif %}
+
+                        <!-- Comptes moved to the LLM blocks (visible there). Keep hidden inputs here for form submission and JS sync -->
+                        <input type="hidden" id="accounting_compte" name="compte" value="606100">
+                        <input type="hidden" id="accounting_description" name="description" value="Achat divers">
+
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Informations du ticket :</h6>
+                            <ul class="mb-0">
+                                {% if accounting_analysis_choice == 'gemini' %}
+                                <li><strong>Date :</strong> <span data-field="date">{{ gemini_analysis.Date|default:"Non détecté" }}</span></li>
+                                <li><strong>Magasin :</strong> <span data-field="magasin">{{ gemini_analysis.Magasin|default:"Non détecté" }}</span></li>
+                                <li><strong>Total :</strong> <span data-field="total">{{ gemini_analysis.Total|default:"Non détecté" }}</span></li>
+                                <li><strong>Libellé d'écriture :</strong> <span data-field="libelle">Achat-{{ gemini_analysis.Magasin|default:"Magasin" }}</span></li>
+                                <li><strong>Nombre d'articles :</strong> <span data-field="articles_count">{{ gemini_analysis.Articles|length|default:"0" }}</span></li>
+                                {% elif accounting_analysis_choice == 'qwen' %}
+                                <li><strong>Date :</strong> <span data-field="date">{{ llm_analysis.Date|default:"Non détecté" }}</span></li>
+                                <li><strong>Magasin :</strong> <span data-field="magasin">{{ llm_analysis.Magasin|default:"Non détecté" }}</span></li>
+                                <li><strong>Total :</strong> <span data-field="total">{{ llm_analysis.Total|default:"Non détecté" }}</span></li>
+                                <li><strong>Libellé d'écriture :</strong> <span data-field="libelle">Achat-{{ llm_analysis.Magasin|default:"Magasin" }}</span></li>
+                                <li><strong>Nombre d'articles :</strong> <span data-field="articles_count">{{ llm_analysis.Articles|length|default:"0" }}</span></li>
+                                {% elif accounting_analysis_choice == 'manual' and form.instance %}
+                                <li><strong>Date :</strong> <span data-field="date">{{ form.instance.date_ticket|default:"Non détecté" }}</span></li>
+                                <li><strong>Magasin :</strong> <span data-field="magasin">{{ form.instance.magasin|default:"Non détecté" }}</span></li>
+                                <li><strong>Total :</strong> <span data-field="total">{{ form.instance.total|default:"Non détecté" }}</span></li>
+                                <li><strong>Libellé d'écriture :</strong> <span data-field="libelle">Achat-{{ form.instance.magasin|default:"Magasin" }}</span></li>
+                                <li><strong>Nombre d'articles :</strong> <span data-field="articles_count">{{ form.instance.articles_data|length|default:"0" }}</span></li>
+                                {% else %}
+                                <li><strong>Date :</strong> <span data-field="date">Non détecté</span></li>
+                                <li><strong>Magasin :</strong> <span data-field="magasin">Non détecté</span></li>
+                                <li><strong>Total :</strong> <span data-field="total">Non détecté</span></li>
+                                <li><strong>Libellé d'écriture :</strong> <span data-field="libelle">Achat-</span></li>
+                                <li><strong>Nombre d'articles :</strong> <span data-field="articles_count">0</span></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-warning">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Compte</th>
+                                        <th>Description</th>
+                                        <th>Libellé Écriture</th>
+                                        <th>Débit</th>
+                                        <th>Crédit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        {% if gemini_analysis.Magasin and gemini_analysis.Total %}
+                                        <td>{{ gemini_analysis.Date|default:"-" }}</td>
+                                        <td id="comptePreview">606100</td>
+                                        <td id="descriptionPreview">Achat divers</td>
+                                        <td>Achat-{{ gemini_analysis.Magasin|default:"Magasin" }}</td>
+                                        <td>{{ gemini_analysis.Total|default:"0.000 DT" }}</td>
+                                        <td></td>
+                                        {% else %}
+                                        <td>{{ llm_analysis.Date|default:"-" }}</td>
+                                        <td id="comptePreview">606100</td>
+                                        <td id="descriptionPreview">Achat divers</td>
+                                        <td>Achat-{{ llm_analysis.Magasin|default:"Magasin" }}</td>
+                                        <td>{{ llm_analysis.Total|default:"0.000 DT" }}</td>
+                                        <td></td>
+                                        {% endif %}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Annuler</button>
+                    <button type="submit" form="accountingForm" class="btn btn-warning"><i class="fas fa-download me-2"></i>Télécharger Excel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'ocrapp/js/animations.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadText = document.getElementById('upload-text');
+            const uploadLabel = document.getElementById('uploadLabel');
+            const imagePreview = document.getElementById('imagePreview');
+            const uploadForm = document.getElementById('uploadForm');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const progressBar = document.getElementById('progressBar');
+            const llmForm = document.getElementById('llmForm');
+            const llmButton = document.getElementById('llmButton');
+            const llmLoadingSpinner = document.getElementById('llmLoadingSpinner');
+
+            // Handle file selection and display preview
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    // Vérifier si c'est une image
+                    if (file.type.match('image.*')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            imagePreview.src = e.target.result;
+                            imagePreview.style.display = 'block';
+                            uploadLabel.classList.add('has-image');
+                        }
+                        reader.readAsDataURL(file);
+                    } else {
+                        // Réinitialiser si ce n'est pas une image
+                        fileInput.value = '';
+                        alert('Veuillez sélectionner un fichier image valide (JPG, PNG, etc.)');
+                    }
+                }
+            });
+
+            // Reset preview when clicking again (optional)
+            uploadLabel.addEventListener('click', function() {
+                if (imagePreview.style.display === 'block') {
+                    fileInput.value = '';
+                    imagePreview.style.display = 'none';
+                    imagePreview.src = '';
+                    uploadLabel.classList.remove('has-image');
+                }
+            });
+
+            // Drag and drop functionality
+            const uploadArea = document.querySelector('.custom-file-upload');
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--primary-color)';
+                uploadArea.style.backgroundColor = 'rgba(67, 97, 238, 0.1)';
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = '#ccc';
+                uploadArea.style.backgroundColor = 'rgba(67, 97, 238, 0.05)';
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#ccc';
+                uploadArea.style.backgroundColor = 'rgba(67, 97, 238, 0.05)';
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    const file = e.dataTransfer.files[0];
+                    if (file.type.match('image.*')) {
+                        const reader = new FileReader();
+                        reader.onload = function(ev) {
+                            imagePreview.src = ev.target.result;
+                            imagePreview.style.display = 'block';
+                            uploadLabel.classList.add('has-image');
+                        }
+                        reader.readAsDataURL(file);
+                    } else {
+                        fileInput.value = '';
+                        alert('Veuillez sélectionner un fichier image valide (JPG, PNG, etc.)');
+                    }
+                }
+            });
+
+            // Form submission
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', function() {
+                    loadingSpinner.style.display = 'block';
+                    // Simulate progress for demo purposes
+                    let progress = 0;
+                    const progressInterval = setInterval(() => {
+                        progress += 5;
+                        progressBar.style.width = progress + '%';
+                        if (progress >= 100) {
+                            clearInterval(progressInterval);
+                        }
+                    }, 200);
+                });
+            }
+
+            // LLM form submission
+            if (llmForm) {
+                llmForm.addEventListener('submit', function() {
+                    // Masquer le bouton et afficher le spinner
+                    llmButton.style.display = 'none';
+                    llmLoadingSpinner.style.display = 'block';
+                    
+                    // Désactiver le formulaire pour éviter les soumissions multiples
+                    llmForm.style.pointerEvents = 'none';
+                    
+                    // Message informatif
+                    console.log('Analyse LLM démarrée...');
+                    
+                                // Le formulaire sera soumis normalement
+            // Le spinner restera visible jusqu'à ce que la page se recharge
+        });
+    }
+    
+    // Mise à jour de l'aperçu du bilan comptable
+    const accountingCompteInput = document.getElementById('accounting_compte');
+    const accountingDescriptionInput = document.getElementById('accounting_description');
+    const comptePreview = document.getElementById('comptePreview');
+    const descriptionPreview = document.getElementById('descriptionPreview');
+    
+    // Update preview from hidden accounting inputs (these are synced from visible LLM inputs)
+    if (accountingCompteInput && comptePreview) {
+        const updateComptePreview = () => { comptePreview.textContent = accountingCompteInput.value || '606100'; };
+        accountingCompteInput.addEventListener('input', updateComptePreview);
+        updateComptePreview();
+    }
+
+    if (accountingDescriptionInput && descriptionPreview) {
+        const updateDescriptionPreview = () => { descriptionPreview.textContent = accountingDescriptionInput.value || 'Achat divers'; };
+        accountingDescriptionInput.addEventListener('input', updateDescriptionPreview);
+        updateDescriptionPreview();
+    }
+
+    // Sync visible Qwen/Gemini inputs to hidden accounting inputs and update preview
+    const qwenCompteEl = document.getElementById('qwen_compte');
+    const qwenDescEl = document.getElementById('qwen_description');
+    const geminiCompteEl = document.getElementById('gemini_compte');
+    const geminiDescEl = document.getElementById('gemini_description');
+
+    function syncToAccounting(compteVal, descVal) {
+        if (accountingCompteInput) { accountingCompteInput.value = compteVal || accountingCompteInput.value; accountingCompteInput.dispatchEvent(new Event('input')); }
+        if (accountingDescriptionInput) { accountingDescriptionInput.value = descVal || accountingDescriptionInput.value; accountingDescriptionInput.dispatchEvent(new Event('input')); }
+    }
+
+    if (qwenCompteEl) qwenCompteEl.addEventListener('input', () => syncToAccounting(qwenCompteEl.value, qwenDescEl ? qwenDescEl.value : null));
+    if (qwenDescEl) qwenDescEl.addEventListener('input', () => syncToAccounting(qwenCompteEl ? qwenCompteEl.value : null, qwenDescEl.value));
+    if (geminiCompteEl) geminiCompteEl.addEventListener('input', () => syncToAccounting(geminiCompteEl.value, geminiDescEl ? geminiDescEl.value : null));
+    if (geminiDescEl) geminiDescEl.addEventListener('input', () => syncToAccounting(geminiCompteEl ? geminiCompteEl.value : null, geminiDescEl.value));
+    
+    // Validation du formulaire de bilan comptable
+    const accountingForm = document.getElementById('accountingForm');
+    if (accountingForm) {
+        accountingForm.addEventListener('submit', function(e) {
+            const compte = (document.getElementById('accounting_compte') || {}).value || '';
+            const description = (document.getElementById('accounting_description') || {}).value || '';
+            const llmData = document.querySelector('input[name="llm_data"]').value;
+            
+            if (!compte.trim()) {
+                e.preventDefault();
+                alert('Veuillez saisir un compte comptable.');
+                return false;
+            }
+            
+            if (!description.trim()) {
+                e.preventDefault();
+                alert('Veuillez saisir une description.');
+                return false;
+            }
+            
+            if (!llmData.trim()) {
+                // Instead of blocking, ask user to confirm generating the accounting report without LLM data
+                const proceed = confirm("Aucune donnée automatique d'analyse détectée. Voulez-vous générer le bilan comptable manuellement ? Cliquez OK pour continuer ou Annuler pour revenir.");
+                if (!proceed) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            
+            // Afficher un message de chargement
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Génération en cours...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
+    
+    // Fonctions pour les formulaires éditables
+    
+    // Fonctions Qwen
+    window.saveQwenData = function() {
+        const data = {
+            magasin: document.getElementById('qwen_magasin').value,
+            date: document.getElementById('qwen_date').value,
+            numero: document.getElementById('qwen_numero').value,
+            total: document.getElementById('qwen_total').value,
+            tva_rate: document.getElementById('qwen_tva_rate').value,
+            tva_amount: document.getElementById('qwen_tva_amount').value,
+            articles: []
+        };
+        
+        // Collecter les articles
+        const articleRows = document.querySelectorAll('#qwenArticlesContainer .qwen-article-row');
+        articleRows.forEach(row => {
+            const nom = row.querySelector('input[placeholder="Nom de l\'article"]').value;
+            const prix = row.querySelector('input[placeholder="Prix"]').value;
+            if (nom.trim() || prix.trim()) {
+                data.articles.push({ nom: nom, prix: parseFloat(prix) || 0 });
+            }
+        });
+        
+        // Validation des données obligatoires
+        if (!data.magasin || !data.date || !data.total) {
+            alert('Les champs Magasin, Date et Total sont obligatoires!');
+            return;
+        }
+        
+        // Préparer les données pour l'envoi
+        const formData = new FormData();
+        formData.append('magasin', data.magasin);
+        formData.append('date', data.date);
+        formData.append('numero', data.numero);
+        formData.append('total', data.total);
+        formData.append('tva_rate', data.tva_rate);
+        formData.append('tva_amount', data.tva_amount);
+        formData.append('articles', JSON.stringify(data.articles));
+        formData.append('analysis_type', 'qwen');
+    // include compte/description from visible Qwen inputs
+    try { formData.append('compte', document.getElementById('qwen_compte').value); } catch(e){}
+    try { formData.append('description', document.getElementById('qwen_description').value); } catch(e){}
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Afficher un indicateur de chargement
+        const saveBtn = document.querySelector('button[onclick="saveQwenData()"]');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sauvegarde...';
+        saveBtn.disabled = true;
+        
+        // Envoyer la requête AJAX
+        fetch('{% url "save_ticket_analysis" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert(result.message + '\nTicket ID: ' + result.ticket_id);
+
+                // Si le ticket a été enregistré côté serveur, ajouter/mettre à jour le champ ticket_id
+                try {
+                    const accountingForm = document.getElementById('accountingForm');
+                    if (accountingForm) {
+                        let ticketInput = accountingForm.querySelector('input[name="ticket_id"]');
+                        if (!ticketInput) {
+                            ticketInput = document.createElement('input');
+                            ticketInput.type = 'hidden';
+                            ticketInput.name = 'ticket_id';
+                            accountingForm.appendChild(ticketInput);
+                        }
+                        ticketInput.value = result.ticket_id;
+
+                        // Force the accounting form to use the manual, saved ticket data
+                        let analysisInput = accountingForm.querySelector('input[name="analysis_data"]');
+                        if (analysisInput) analysisInput.value = 'manual';
+                    }
+                } catch (e) {
+                    console.warn('Impossible d\'ajouter ticket_id au formulaire de bilan:', e);
+                }
+
+                // Mettre à jour le bilan comptable si les données sont disponibles
+                if (result.updated_data) {
+                    updateBilanComptable(result.updated_data);
+                }
+
+                console.log('Données Qwen sauvegardées:', data);
+            } else {
+                alert('Erreur lors de la sauvegarde: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la sauvegarde');
+        })
+        .finally(() => {
+            // Restaurer le bouton
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    };
+    
+    window.addQwenArticle = function() {
+        const container = document.getElementById('qwenArticlesContainer');
+        const newRow = document.createElement('div');
+        newRow.className = 'row mb-2 qwen-article-row';
+        newRow.innerHTML = `
+            <div class="col-md-6">
+                <input type="text" class="form-control form-control-sm" placeholder="Nom de l'article">
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control form-control-sm" placeholder="Prix">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeQwenArticle(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(newRow);
+    };
+    
+    window.removeQwenArticle = function(button) {
+        const container = document.getElementById('qwenArticlesContainer');
+        if (container.children.length > 1) {
+            button.closest('.qwen-article-row').remove();
+        } else {
+            alert('Au moins un article doit être présent.');
+        }
+    };
+    
+    // Fonctions Gemini
+    window.saveGeminiData = function() {
+        const data = {
+            magasin: document.getElementById('gemini_magasin').value,
+            date: document.getElementById('gemini_date').value,
+            numero: document.getElementById('gemini_numero').value,
+            total: document.getElementById('gemini_total').value,
+            tva_rate: document.getElementById('gemini_tva_rate').value,
+            tva_amount: document.getElementById('gemini_tva_amount').value,
+            articles: []
+        };
+        
+        // Collecter les articles
+        const articleRows = document.querySelectorAll('#geminiArticlesContainer .gemini-article-row');
+        articleRows.forEach(row => {
+            const nom = row.querySelector('input[placeholder="Nom de l\'article"]').value;
+            const prix = row.querySelector('input[placeholder="Prix"]').value;
+            if (nom.trim() || prix.trim()) {
+                data.articles.push({ nom: nom, prix: parseFloat(prix) || 0 });
+            }
+        });
+        
+        // Validation des données obligatoires
+        if (!data.magasin || !data.date || !data.total) {
+            alert('Les champs Magasin, Date et Total sont obligatoires!');
+            return;
+        }
+        
+        // Préparer les données pour l'envoi
+        const formData = new FormData();
+        formData.append('magasin', data.magasin);
+        formData.append('date', data.date);
+        formData.append('numero', data.numero);
+        formData.append('total', data.total);
+        formData.append('tva_rate', data.tva_rate);
+        formData.append('tva_amount', data.tva_amount);
+        formData.append('articles', JSON.stringify(data.articles));
+        formData.append('analysis_type', 'gemini');
+    // include compte/description from visible Gemini inputs
+    try { formData.append('compte', document.getElementById('gemini_compte').value); } catch(e){}
+    try { formData.append('description', document.getElementById('gemini_description').value); } catch(e){}
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Afficher un indicateur de chargement
+        const saveBtn = document.querySelector('button[onclick="saveGeminiData()"]');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sauvegarde...';
+        saveBtn.disabled = true;
+        
+        // Envoyer la requête AJAX
+        fetch('{% url "save_ticket_analysis" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert(result.message + '\nTicket ID: ' + result.ticket_id);
+
+                // Si le ticket a été enregistré côté serveur, ajouter/mettre à jour le champ ticket_id
+                try {
+                    const accountingForm = document.getElementById('accountingForm');
+                    if (accountingForm) {
+                        let ticketInput = accountingForm.querySelector('input[name="ticket_id"]');
+                        if (!ticketInput) {
+                            ticketInput = document.createElement('input');
+                            ticketInput.type = 'hidden';
+                            ticketInput.name = 'ticket_id';
+                            accountingForm.appendChild(ticketInput);
+                        }
+                        ticketInput.value = result.ticket_id;
+
+                        // Force the accounting form to use the manual, saved ticket data
+                        let analysisInput = accountingForm.querySelector('input[name="analysis_data"]');
+                        if (analysisInput) analysisInput.value = 'manual';
+                    }
+                } catch (e) {
+                    console.warn('Impossible d\'ajouter ticket_id au formulaire de bilan:', e);
+                }
+
+                // Mettre à jour le bilan comptable si les données sont disponibles
+                if (result.updated_data) {
+                    updateBilanComptable(result.updated_data);
+                }
+
+                console.log('Données Gemini sauvegardées:', data);
+            } else {
+                alert('Erreur lors de la sauvegarde: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la sauvegarde');
+        })
+        .finally(() => {
+            // Restaurer le bouton
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+    };
+    
+    window.addGeminiArticle = function() {
+        const container = document.getElementById('geminiArticlesContainer');
+        const newRow = document.createElement('div');
+        newRow.className = 'row mb-2 gemini-article-row';
+        newRow.innerHTML = `
+            <div class="col-md-6">
+                <input type="text" class="form-control form-control-sm" placeholder="Nom de l'article">
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control form-control-sm" placeholder="Prix">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeGeminiArticle(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(newRow);
+    };
+    
+    window.removeGeminiArticle = function(button) {
+        const container = document.getElementById('geminiArticlesContainer');
+        if (container.children.length > 1) {
+            button.closest('.gemini-article-row').remove();
+        } else {
+            alert('Au moins un article doit être présent.');
+        }
+    };
+    
+    // Fonctions de calcul TVA
+    window.calculateQwenTVA = function() {
+        const totalInput = document.getElementById('qwen_total');
+        const tvaRateInput = document.getElementById('qwen_tva_rate');
+        const tvaAmountInput = document.getElementById('qwen_tva_amount');
+        
+        if (totalInput && tvaRateInput && tvaAmountInput) {
+            const total = parseFloat(totalInput.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+            const tvaRate = parseFloat(tvaRateInput.value) || 0;
+            
+            // Calculer le montant HT et la TVA
+            const totalHT = total / (1 + tvaRate / 100);
+            const tvaAmount = total - totalHT;
+            
+            // Afficher le montant TVA avec 3 décimales
+            tvaAmountInput.value = tvaAmount.toFixed(3) + ' DT';
+        }
+    };
+    
+    window.calculateGeminiTVA = function() {
+        const totalInput = document.getElementById('gemini_total');
+        const tvaRateInput = document.getElementById('gemini_tva_rate');
+        const tvaAmountInput = document.getElementById('gemini_tva_amount');
+        
+        if (totalInput && tvaRateInput && tvaAmountInput) {
+            const total = parseFloat(totalInput.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+            const tvaRate = parseFloat(tvaRateInput.value) || 0;
+            
+            // Calculer le montant HT et la TVA
+            const totalHT = total / (1 + tvaRate / 100);
+            const tvaAmount = total - totalHT;
+            
+            // Afficher le montant TVA avec 3 décimales
+            tvaAmountInput.value = tvaAmount.toFixed(3) + ' DT';
+        }
+    };
+    
+    // Fonction pour mettre à jour le bilan comptable existant
+    window.updateBilanComptable = function(updatedData) {
+        // Essayer de mettre à jour les éléments du bilan comptable s'ils existent
+        try {
+            // Mettre à jour la date dans les informations du ticket
+            const dateElements = document.querySelectorAll('[data-field="date"]');
+            dateElements.forEach(el => {
+                if (el) el.textContent = updatedData.date;
+            });
+            
+            // Mettre à jour le magasin
+            const magasinElements = document.querySelectorAll('[data-field="magasin"]');
+            magasinElements.forEach(el => {
+                if (el) el.textContent = updatedData.magasin;
+            });
+            
+            // Mettre à jour le total
+            const totalElements = document.querySelectorAll('[data-field="total"]');
+            totalElements.forEach(el => {
+                if (el) el.textContent = updatedData.total + ' DT';
+            });
+            
+            // Mettre à jour le libellé d'écriture
+            const libelleElements = document.querySelectorAll('[data-field="libelle"]');
+            libelleElements.forEach(el => {
+                if (el) el.textContent = updatedData.libelle;
+            });
+            
+            // Afficher un message de mise à jour
+            console.log('Bilan comptable mis à jour avec:', updatedData);
+            
+            // Optionnel: afficher une notification visuelle
+            showUpdateNotification('Bilan comptable mis à jour avec les nouvelles données!');
+            
+            // Mettre à jour également la table de prévisualisation dans le modal
+            try {
+                // Date dans la première cellule du tableau du modal
+                const tableDateCell = document.querySelector('#accountingModal table tbody tr td:first-child');
+                if (tableDateCell) tableDateCell.textContent = updatedData.date || '-';
+
+                // Libellé dans la 4ème colonne
+                const libelleCell = document.querySelector('#accountingModal table tbody tr td:nth-child(4)');
+                if (libelleCell) libelleCell.textContent = updatedData.libelle || ('Achat-' + (updatedData.magasin || ''));
+
+                // Débit dans la 5ème colonne
+                const debitCell = document.querySelector('#accountingModal table tbody tr td:nth-child(5)');
+                if (debitCell) debitCell.textContent = (updatedData.total ? (updatedData.total + ' DT') : '-');
+
+                // Mettre à jour les previews de compte/description si présentes
+                const comptePreviewEl = document.getElementById('comptePreview');
+                if (comptePreviewEl && updatedData.compte) comptePreviewEl.textContent = updatedData.compte;
+
+                const descriptionPreviewEl = document.getElementById('descriptionPreview');
+                if (descriptionPreviewEl && updatedData.description) descriptionPreviewEl.textContent = updatedData.description;
+            } catch (e) {
+                console.warn('Impossible de mettre à jour les cellules du modal:', e);
+            }
+            
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour du bilan comptable:', error);
+        }
+    };
+
+    // Fonction pour ouvrir une image dans un modal agrandi
+    window.openImageModal = function(url) {
+        try {
+            const img = document.getElementById('imageModalImg');
+            if (img) {
+                img.src = url || '';
+            }
+            const modalEl = document.getElementById('imageModal');
+            if (modalEl) {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
+        } catch (e) {
+            console.error('openImageModal error:', e);
+        }
+    };
+    
+    // Fonction pour afficher une notification de mise à jour
+    window.showUpdateNotification = function(message) {
+        // Créer une notification temporaire
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Supprimer automatiquement après 5 secondes
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+    };
+    
+    }); // Fermeture de la première fonction DOMContentLoaded
+    
+    // Calculer automatiquement la TVA au chargement de la page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attendre un peu pour que les valeurs soient chargées
+        setTimeout(function() {
+            calculateQwenTVA();
+            calculateGeminiTVA();
+        }, 1000);
+    });
+    
+    </script>
+
+    <!-- Footer -->
+    <footer class="mt-5" style="background: linear-gradient(135deg, var(--green-primary) 0%, var(--green-secondary) 100%); color: white; padding: 3rem 0 2rem; box-shadow: 0 -4px 15px rgba(45, 80, 22, 0.3);">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{% static 'ocrapp/images/ZITOUNA.webp' %}" alt="Logo ZITOUNA" style="height: 45px; border-radius: 8px; margin-right: 15px;">
+                        <div>
+                            <h5 class="mb-0">OCR Pro - ZITOUNA</h5>
+                            <small class="opacity-75">Banque Zitouna</small>
+                        </div>
+                    </div>
+                    <p class="opacity-75">Solution d'analyse intelligente de tickets de caisse utilisant les dernières technologies d'IA et d'OCR, développée pour Banque Zitouna </p>
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="{% static 'ocrapp/images/banque-zitouna-tamouil-dirasset1.png' %}" alt="Banque Zitouna Tamouil Dirasi" style="height: 35px; border-radius: 5px;">
+                        <div class="d-flex gap-2">
+                            <i class="fas fa-university opacity-75" style="cursor: pointer;" title="Banque Zitouna"></i>
+                            <i class="fas fa-envelope fa-lg opacity-75" style="cursor: pointer;" title="Contact"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5 class="mb-3">Fonctionnalités</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check me-2 text-success"></i>OCR Multi-Moteurs</li>
+                        <li class="mb-2"><i class="fas fa-check me-2 text-success"></i>Intelligence Artificielle</li>
+                        <li class="mb-2"><i class="fas fa-check me-2 text-success"></i>Validation Regex</li>
+                        <li class="mb-2"><i class="fas fa-check me-2 text-success"></i>Exports PDF/Excel</li>
+                        <li class="mb-2"><i class="fas fa-check me-2 text-success"></i>Historique Complet</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5 class="mb-3">Technologies</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2 opacity-75"><i class="fas fa-robot me-2"></i>DocTR</li>
+                                <li class="mb-2 opacity-75"><i class="fas fa-robot me-2"></i>Tesseract</li>
+                                <li class="mb-2 opacity-75"><i class="fas fa-robot me-2"></i>Docling</li>
+                            </ul>
+                        </div>
+                        <div class="col-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2 opacity-75"><i class="fas fa-brain me-2"></i>Qwen3-30B</li>
+                                <li class="mb-2 opacity-75"><i class="fas fa-brain me-2"></i>Google Gemini</li>
+                                <li class="mb-2 opacity-75"><i class="fab fa-python me-2"></i>Django</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4 opacity-25">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 opacity-75">&copy; 2025 OCR Pro ZITOUNA - Banque Zitouna. Tous droits réservés.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="opacity-75">Développé avec <i class="fas fa-heart text-danger"></i> pour Banque Zitouna</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

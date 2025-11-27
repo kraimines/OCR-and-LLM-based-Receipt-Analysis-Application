@@ -1,0 +1,42 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="analyticsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffc107;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fd7e14;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Chart Background -->
+  <rect x="15" y="15" width="70" height="70" rx="8" fill="white" stroke="url(#analyticsGradient)" stroke-width="2" opacity="0.1"/>
+  
+  <!-- Chart Bars -->
+  <rect x="25" y="60" width="8" height="20" fill="url(#analyticsGradient)" opacity="0.8">
+    <animate attributeName="height" values="20;35;20" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="60;45;60" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="38" y="50" width="8" height="30" fill="url(#analyticsGradient)" opacity="0.6">
+    <animate attributeName="height" values="30;45;30" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="50;35;50" dur="2.5s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="51" y="40" width="8" height="40" fill="url(#analyticsGradient)" opacity="0.8">
+    <animate attributeName="height" values="40;55;40" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="40;25;40" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="64" y="55" width="8" height="25" fill="url(#analyticsGradient)" opacity="0.6">
+    <animate attributeName="height" values="25;40;25" dur="2.2s" repeatCount="indefinite"/>
+    <animate attributeName="y" values="55;40;55" dur="2.2s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- Trend Line -->
+  <path d="M25 65 Q38 55 51 45 Q64 50 75 40" stroke="#28a745" stroke-width="3" fill="none" opacity="0.8"/>
+  
+  <!-- Data Points -->
+  <circle cx="29" cy="65" r="3" fill="#28a745"/>
+  <circle cx="42" cy="55" r="3" fill="#28a745"/>
+  <circle cx="55" cy="45" r="3" fill="#28a745"/>
+  <circle cx="68" cy="50" r="3" fill="#28a745"/>
+  
+  <!-- Axes -->
+  <line x1="20" y1="80" x2="80" y2="80" stroke="#6c757d" stroke-width="2"/>
+  <line x1="20" y1="80" x2="20" y2="20" stroke="#6c757d" stroke-width="2"/>
+</svg>
